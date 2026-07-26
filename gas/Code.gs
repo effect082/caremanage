@@ -63,17 +63,29 @@ function handleSignup(ss, p) {
     }
   }
 
+  var eldersSheet = ss.getSheetByName('Elders');
+  var eldersData = eldersSheet.getDataRange().getValues();
+  
+  var elderCode = p.elder_code;
+  var elderName = p.elder_name;
+
+  // elder_code가 전달되지 않은 경우 기존 등록된 어르신 자동 매칭 또는 ELDER001 기본값 사용
+  if (!elderCode || elderCode.trim() === '') {
+    if (eldersData.length > 1) {
+      elderCode = eldersData[1][0];
+      elderName = eldersData[1][1];
+    } else {
+      elderCode = 'ELDER001';
+      elderName = '어르신';
+    }
+  }
+
   var userId = 'USER_' + new Date().getTime();
-  var elderCode = p.elder_code || ('ELDER_' + String(new Date().getTime()).slice(-6));
   var createdAt = new Date().toISOString();
 
   usersSheet.appendRow([userId, p.name, p.role, p.password_hash, elderCode, createdAt]);
 
-  var eldersSheet = ss.getSheetByName('Elders');
-  var eldersData = eldersSheet.getDataRange().getValues();
   var elderFound = false;
-  var elderName = p.elder_name || (p.name + " 댁 어르신");
-
   for (var j = 1; j < eldersData.length; j++) {
     if (eldersData[j][0] === elderCode) {
       elderFound = true;

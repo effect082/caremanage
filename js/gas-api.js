@@ -61,14 +61,19 @@ class GasApiService {
   }
 
   // 1. 회원가입 API
-  async signup(name, role, password, elderCode, elderName = '') {
+  async signup(name, role, password, elderCode = '', elderName = '') {
     const passwordHash = await this.hashPassword(password);
+    
+    // 로컬/GAS 통합 연동: elderCode 미입력 시 기본 ELDER001 어르신에 자동으로 연동
+    const targetElderCode = elderCode || 'ELDER001';
+    const targetElderName = elderName || '어르신';
+
     const payload = {
       name,
       role,
       password_hash: passwordHash,
-      elder_code: elderCode || `ELDER_${Date.now().toString().slice(-5)}`,
-      elder_name: elderName || `${name} 어르신`
+      elder_code: targetElderCode,
+      elder_name: targetElderName
     };
 
     const res = await this.request('signup', {}, 'POST', payload);
@@ -86,7 +91,7 @@ class GasApiService {
         name,
         role,
         password_hash: passwordHash,
-        elder_code: payload.elder_code,
+        elder_code: targetElderCode,
         created_at: new Date().toISOString()
       };
       users.push(newUser);
@@ -94,9 +99,9 @@ class GasApiService {
 
       // 어르신 정보 업데이트
       const elders = JSON.parse(localStorage.getItem(CONFIG.KEYS.LOCAL_ELDERS) || '[]');
-      let elder = elders.find(e => e.elder_code === payload.elder_code);
+      let elder = elders.find(e => e.elder_code === targetElderCode);
       if (!elder) {
-        elder = { elder_code: payload.elder_code, elder_name: payload.elder_name, caregiver_id: newUser.user_id };
+        elder = { elder_code: targetElderCode, elder_name: targetElderName, caregiver_id: newUser.user_id };
         elders.push(elder);
         localStorage.setItem(CONFIG.KEYS.LOCAL_ELDERS, JSON.stringify(elders));
       }
