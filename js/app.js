@@ -189,6 +189,34 @@ class App {
       }
 
       const loginBtn = document.getElementById('loginSubmitBtn');
+
+      // 1단계: 0ms 초고속 로컬 세션 검증 (SWR 즉각 로그인)
+      const passHash = await gasApi.hashPassword(pin);
+      const localUsers = JSON.parse(localStorage.getItem(CONFIG.KEYS.LOCAL_USERS) || '[]');
+      const localMatch = localUsers.find(u => u.name === name && u.role === role && u.password_hash === passHash);
+
+      if (localMatch) {
+        if (loginErrBox) loginErrBox.style.display = 'none';
+        store.setCurrentUser({
+          ...localMatch,
+          elder_name: localMatch.elder_name || `${name} 댁 어르신`
+        });
+        this.showToast('🎉 로그인되었습니다!', 'success');
+        this.checkAuthAndRender();
+
+        // 백그라운드 원격 수신 검증 및 어르신 정보 동기화
+        gasApi.login(name, role, pin).then(res => {
+          if (res && res.success && res.elder && res.elder.elder_name) {
+            const cur = store.currentUser;
+            if (cur && cur.name === name) {
+              store.setCurrentUser({ ...cur, elder_name: res.elder.elder_name });
+            }
+          }
+        });
+        return;
+      }
+
+      // 2단계: 신규 기기/최초 로그인 시 백그라운드 서버 검증
       if (loginBtn) {
         loginBtn.disabled = true;
         loginBtn.innerHTML = '⏳ 로그인 진행 중...';
@@ -203,7 +231,7 @@ class App {
           ...res.user,
           elder_name: res.elder ? res.elder.elder_name : `${name} 댁 어르신`
         });
-        this.showToast('로그인이 완료되었습니다.', 'success');
+        this.showToast('🎉 로그인되었습니다!', 'success');
         this.checkAuthAndRender();
       } else {
         const errMsg = res.message || '가입된 이름 또는 4자리 비밀번호가 일치하지 않습니다. 이름과 PIN을 확인해 주세요.';
@@ -273,6 +301,23 @@ class App {
 
       if (res.success) {
         if (signupErrBox) signupErrBox.style.display = 'none';
+
+        // 0ms 초고속 로그인을 위한 로컬 프로필 즉각 캐싱
+        const passHash = await gasApi.hashPassword(pin);
+        const users = JSON.parse(localStorage.getItem(CONFIG.KEYS.LOCAL_USERS) || '[]');
+        const newUser = {
+          user_id: res.user ? res.user.user_id : 'USER_' + Date.now(),
+          name: name,
+          role: role,
+          password_hash: passHash,
+          elder_code: res.user ? res.user.elder_code : elderCode,
+          elder_name: elderName
+        };
+        const existIdx = users.findIndex(u => u.name === name && u.role === role);
+        if (existIdx >= 0) users[existIdx] = newUser;
+        else users.push(newUser);
+        localStorage.setItem(CONFIG.KEYS.LOCAL_USERS, JSON.stringify(users));
+
         this.showToast('🎉 회원 가입이 완료되었습니다! 로그인해 주세요.', 'success');
         
         document.getElementById('loginName').value = name;

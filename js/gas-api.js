@@ -145,10 +145,23 @@ class GasApiService {
     return res;
   }
 
-  // 2. 로그인 API
+  // 2. 로그인 API (로컬 세션 오프라인/SWR 캐싱)
   async login(name, role, password) {
     const passwordHash = await this.hashPassword(password);
     const res = await this.request('login', { name, role, password_hash: passwordHash }, 'GET');
+
+    if (res.success && res.user) {
+      const users = JSON.parse(localStorage.getItem(CONFIG.KEYS.LOCAL_USERS) || '[]');
+      const idx = users.findIndex(u => u.name === name && u.role === role);
+      const userRecord = {
+        ...res.user,
+        password_hash: passwordHash,
+        elder_name: res.elder ? res.elder.elder_name : `${name} 댁 어르신`
+      };
+      if (idx >= 0) users[idx] = userRecord;
+      else users.push(userRecord);
+      localStorage.setItem(CONFIG.KEYS.LOCAL_USERS, JSON.stringify(users));
+    }
 
     if (!res.success && res.isOfflineFallback) {
       const users = JSON.parse(localStorage.getItem(CONFIG.KEYS.LOCAL_USERS) || '[]');
@@ -156,7 +169,7 @@ class GasApiService {
       
       if (user) {
         const elders = JSON.parse(localStorage.getItem(CONFIG.KEYS.LOCAL_ELDERS) || '[]');
-        const elder = elders.find(e => e.elder_code === user.elder_code) || { elder_code: user.elder_code, elder_name: `${user.name} 댁 어르신` };
+        const elder = elders.find(e => e.elder_code === user.elder_code) || { elder_code: user.elder_code, elder_name: user.elder_name || `${user.name} 댁 어르신` };
         
         return {
           success: true,

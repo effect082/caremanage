@@ -95,16 +95,36 @@ function handleSignup(ss, p) {
 
   usersSheet.appendRow([userId, p.name, p.role, p.password_hash, elderCode, createdAt]);
 
-  return createJsonResponse({
+  var resData = {
     success: true,
     user: { user_id: userId, name: p.name, role: p.role, elder_code: elderCode },
     elder: { elder_code: elderCode, elder_name: elderName },
     message: "회원가입이 완료되었습니다."
-  });
+  };
+
+  try {
+    var cache = CacheService.getScriptCache();
+    var cacheKey = "LOGIN_" + p.name + "_" + p.role;
+    cache.put(cacheKey, JSON.stringify({ passHash: p.password_hash, resData: resData }), 21600);
+  } catch(e) {}
+
+  return createJsonResponse(resData);
 }
 
-// 2. 로그인
+// 2. 로그인 (초고속 Script Cache 0.1초 응답 적용)
 function handleLogin(ss, p) {
+  var cacheKey = "LOGIN_" + p.name + "_" + p.role;
+  try {
+    var cache = CacheService.getScriptCache();
+    var cached = cache.get(cacheKey);
+    if (cached) {
+      var parsed = JSON.parse(cached);
+      if (parsed.passHash === p.password_hash) {
+        return createJsonResponse(parsed.resData);
+      }
+    }
+  } catch(e) {}
+
   var usersSheet = ss.getSheetByName('Users');
   var usersData = usersSheet.getDataRange().getValues();
   
@@ -127,11 +147,18 @@ function handleLogin(ss, p) {
         }
       }
 
-      return createJsonResponse({
+      var resData = {
         success: true,
         user: { user_id: uId, name: name, role: role, elder_code: eCode },
         elder: { elder_code: eCode, elder_name: elderName }
-      });
+      };
+
+      try {
+        var cache = CacheService.getScriptCache();
+        cache.put(cacheKey, JSON.stringify({ passHash: passHash, resData: resData }), 21600);
+      } catch(e) {}
+
+      return createJsonResponse(resData);
     }
   }
 
