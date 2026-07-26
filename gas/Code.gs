@@ -89,13 +89,18 @@ function handleSignup(ss, p) {
   for (var j = 1; j < eldersData.length; j++) {
     if (eldersData[j][0] === elderCode) {
       elderFound = true;
-      elderName = eldersData[j][1];
+      if (p.elder_name && p.elder_name.trim() !== '') {
+        elderName = p.elder_name;
+        eldersSheet.getRange(j + 1, 2).setValue(p.elder_name);
+      } else {
+        elderName = eldersData[j][1];
+      }
       break;
     }
   }
 
   if (!elderFound) {
-    eldersSheet.appendRow([elderCode, elderName, userId]);
+    eldersSheet.appendRow([elderCode, elderName || (p.name + " 댁 어르신"), userId]);
   }
 
   return createJsonResponse({
