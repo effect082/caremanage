@@ -63,17 +63,19 @@ class GasApiService {
   // 1. 회원가입 API
   async signup(name, role, password, elderCode = '', elderName = '') {
     const passwordHash = await this.hashPassword(password);
-    
-    // 로컬/GAS 통합 연동: elderCode 미입력 시 기본 ELDER001 어르신에 자동으로 연동
-    const targetElderCode = elderCode || 'ELDER001';
-    const targetElderName = elderName || '어르신';
+    const reqElderName = (elderName || '').trim() || '어르신';
+
+    // 로컬 스토리지에 기존 동일한 어르신 성함이 있는지 확인하여 elder_code 설정
+    const localElders = JSON.parse(localStorage.getItem(CONFIG.KEYS.LOCAL_ELDERS) || '[]');
+    const existingElder = localElders.find(e => (e.elder_name || '').trim() === reqElderName);
+    const targetElderCode = elderCode || (existingElder ? existingElder.elder_code : `ELDER_${Date.now()}`);
 
     const payload = {
       name,
       role,
       password_hash: passwordHash,
       elder_code: targetElderCode,
-      elder_name: targetElderName
+      elder_name: reqElderName
     };
 
     const res = await this.request('signup', {}, 'POST', payload);
@@ -98,13 +100,18 @@ class GasApiService {
       localStorage.setItem(CONFIG.KEYS.LOCAL_USERS, JSON.stringify(users));
 
       // 어르신 정보 업데이트
-      const elders = JSON.parse(localStorage.getItem(CONFIG.KEYS.LOCAL_ELDERS) || '[]');
-      let elder = elders.find(e => e.elder_code === targetElderCode);
-      if (!elder) {
-        elder = { elder_code: targetElderCode, elder_name: targetElderName, caregiver_id: newUser.user_id };
-        elders.push(elder);
-        localStorage.setItem(CONFIG.KEYS.LOCAL_ELDERS, JSON.stringify(elders));
+      if (!existingElder) {
+        localElders.push({ elder_code: targetElderCode, elder_name: reqElderName, caregiver_id: newUser.user_id });
+        localStorage.setItem(CONFIG.KEYS.LOCAL_ELDERS, JSON.stringify(localElders));
       }
+
+      return {
+        success: true,
+        user: newUser,
+        elder: { elder_code: targetElderCode, elder_name: reqElderName },
+        message: '로컬 동기화 모드로 가입되었습니다.'
+      };
+    }
 
       return {
         success: true,

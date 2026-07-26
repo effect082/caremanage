@@ -48,10 +48,15 @@ function handleRequest(params) {
   }
 }
 
-// 1. 회원가입
+// 1. 회원가입 (어르신 성함 매칭 및 권한 범위 격리)
 function handleSignup(ss, p) {
   if (!p.name || !p.password_hash) {
     return createJsonResponse({ success: false, message: "이름과 비밀번호가 필요합니다." });
+  }
+
+  var reqElderName = (p.elder_name || "").trim();
+  if (!reqElderName) {
+    return createJsonResponse({ success: false, message: "어르신 성함(필수)을 입력해 주세요." });
   }
 
   var usersSheet = ss.getSheetByName('Users');
@@ -66,42 +71,29 @@ function handleSignup(ss, p) {
   var eldersSheet = ss.getSheetByName('Elders');
   var eldersData = eldersSheet.getDataRange().getValues();
   
-  var elderCode = p.elder_code;
-  var elderName = p.elder_name;
+  var elderCode = "";
+  var elderName = reqElderName;
 
-  // elder_code가 전달되지 않은 경우 기존 등록된 어르신 자동 매칭 또는 ELDER001 기본값 사용
-  if (!elderCode || elderCode.trim() === '') {
-    if (eldersData.length > 1) {
-      elderCode = eldersData[1][0];
-      elderName = eldersData[1][1];
-    } else {
-      elderCode = 'ELDER001';
-      elderName = '어르신';
+  // 어르신 성함(elder_name)이 일치하는 기존 어르신 찾기
+  for (var j = 1; j < eldersData.length; j++) {
+    var existingElderName = String(eldersData[j][1] || "").trim();
+    if (existingElderName === reqElderName) {
+      elderCode = eldersData[j][0];
+      elderName = existingElderName;
+      break;
     }
   }
 
   var userId = 'USER_' + new Date().getTime();
   var createdAt = new Date().toISOString();
 
+  // 기존에 일치하는 어르신이 없을 경우 신규 어르신 코드 생성 및 Elders 시트 등록
+  if (!elderCode) {
+    elderCode = 'ELDER_' + new Date().getTime();
+    eldersSheet.appendRow([elderCode, elderName, userId]);
+  }
+
   usersSheet.appendRow([userId, p.name, p.role, p.password_hash, elderCode, createdAt]);
-
-  var elderFound = false;
-  for (var j = 1; j < eldersData.length; j++) {
-    if (eldersData[j][0] === elderCode) {
-      elderFound = true;
-      if (p.elder_name && p.elder_name.trim() !== '') {
-        elderName = p.elder_name;
-        eldersSheet.getRange(j + 1, 2).setValue(p.elder_name);
-      } else {
-        elderName = eldersData[j][1];
-      }
-      break;
-    }
-  }
-
-  if (!elderFound) {
-    eldersSheet.appendRow([elderCode, elderName || (p.name + " 댁 어르신"), userId]);
-  }
 
   return createJsonResponse({
     success: true,
