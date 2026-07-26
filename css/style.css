@@ -422,14 +422,15 @@ h3 { font-size: 1.1rem; }
 }
 
 .chip.selected {
-  background: var(--primary-blue-light);
-  border-color: var(--primary-blue);
-  box-shadow: 0 2px 10px rgba(47, 111, 237, 0.15);
+  background: rgba(47, 111, 237, 0.12) !important;
+  border: 2px solid var(--primary-blue) !important;
+  box-shadow: 0 4px 12px rgba(47, 111, 237, 0.25) !important;
+  transform: translateY(-2px);
 }
 
 .chip.selected .chip-label {
-  color: var(--primary-blue);
-  font-weight: 700;
+  color: var(--primary-blue) !important;
+  font-weight: 800 !important;
 }
 
 /* Accordion & Section Cards */

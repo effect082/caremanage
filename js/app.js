@@ -329,10 +329,11 @@ class App {
       }
     });
 
-    // 8. 칩 선택 바인딩 (컨디션 / 식사 / 배변형태)
+    // 8. 칩 선택 바인딩 (컨디션 / 식사 / 배변형태 / 투약체크)
     this.setupChips('conditionChips', (val) => this.selectedCondition = val);
     this.setupChips('mealChips', (val) => this.selectedMeal = val);
     this.setupChips('stoolTypeChips', (val) => this.selectedStoolType = val);
+    this.setupMultiToggleChips('medicationChips');
 
     // 9. 케어 작성 폼 제출
     document.getElementById('caregiverForm').addEventListener('submit', async (e) => {
@@ -346,6 +347,18 @@ class App {
     });
     document.getElementById('detailModalOverlay').addEventListener('click', (e) => {
       if (e.target.id === 'detailModalOverlay') uiComponents.closeDetailModal();
+    });
+  }
+
+  setupMultiToggleChips(containerId) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+
+    container.querySelectorAll('.chip').forEach(chip => {
+      chip.onclick = (e) => {
+        const targetChip = e.target.closest('.chip') || chip;
+        targetChip.classList.toggle('selected');
+      };
     });
   }
 
