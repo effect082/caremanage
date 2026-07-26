@@ -683,19 +683,15 @@ class App {
 
   toggleMedicationChip(chipEl) {
     if (!chipEl) return;
-    chipEl.classList.toggle('selected');
+    if (chipEl.classList.contains('selected')) {
+      chipEl.classList.remove('selected');
+    } else {
+      chipEl.classList.add('selected');
+    }
   }
 
   setupMultiToggleChips(containerId) {
-    const container = document.getElementById(containerId);
-    if (!container) return;
-
-    container.querySelectorAll('.chip').forEach(chip => {
-      chip.onclick = (e) => {
-        const targetChip = e.target.closest('.chip') || chip;
-        this.toggleMedicationChip(targetChip);
-      };
-    });
+    // Handled via direct inline onclick in HTML to prevent double-toggling
   }
 
   // 최근 7일 작성 이력 로드
@@ -805,8 +801,8 @@ class App {
     // 1단계: 0ms 즉각 UI 반환
     store.saveLocalRecord(user.elder_code, this.currentDateStr, careData);
     const confirmNotice = user.role === '가족'
-      ? '🎉 [가족 직접 저장 완료] 일일 케어 기록 저장이 성공적으로 완료되었습니다!'
-      : '🎉 [요양보호사 저장 완료] 일일 케어 기록 저장이 성공적으로 완료되었습니다!';
+      ? '🎉 저장이 완료되었습니다! (가족 직접 작성)'
+      : '🎉 저장이 완료되었습니다! (요양보호사 작성)';
     
     this.showToast(confirmNotice, 'success');
     this.updateStatusBadge(true, user.role, user.name);
