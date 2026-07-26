@@ -374,16 +374,39 @@ class App {
     checkInput('eveningTemp', CONFIG.THRESHOLDS.HIGH_TEMP);
   }
 
+  // 대시보드 날짜 및 상태 뱃지 안전 갱신 헬퍼
+  updateStatusDate(dateStr) {
+    ['dashDateLabel', 'careDateLabel', 'familyDateLabel'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.textContent = dateStr;
+    });
+  }
+
+  updateStatusBadge(isWritten) {
+    const badgeHTML = isWritten 
+      ? `<span class="badge badge-green">✔ 오늘 기록 작성 완료</span>` 
+      : `<span class="badge badge-warning">⚠ 오늘 기록 미작성</span>`;
+      
+    ['dashStatusBadge', 'todayStatusBadge', 'familyStatusBadge'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.innerHTML = badgeHTML;
+    });
+  }
+
   // 요양보호사 대시보드 데이터 로드
   async loadCaregiverDashboard() {
     const user = store.currentUser;
-    document.getElementById('careDateLabel').textContent = this.currentDateStr;
+    if (!user) return;
+
+    this.updateStatusDate(this.currentDateStr);
     
     // 현재 시각 자동 바인딩
     const now = new Date();
     const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-    document.getElementById('morningTime').value = timeStr;
-    document.getElementById('eveningTime').value = timeStr;
+    const morningTimeEl = document.getElementById('morningTime');
+    const eveningTimeEl = document.getElementById('eveningTime');
+    if (morningTimeEl) morningTimeEl.value = timeStr;
+    if (eveningTimeEl) eveningTimeEl.value = timeStr;
 
     // 기존 오늘의 작성 기록 조회
     this.showToast('오늘 기록 확인 중...', 'info');
@@ -391,19 +414,19 @@ class App {
     
     if (res.success && res.data) {
       const d = res.data;
-      if (d.morning_systolic) document.getElementById('morningSys').value = d.morning_systolic;
-      if (d.morning_diastolic) document.getElementById('morningDia').value = d.morning_diastolic;
-      if (d.morning_temp) document.getElementById('morningTemp').value = d.morning_temp;
-      if (d.morning_time) document.getElementById('morningTime').value = d.morning_time;
+      if (d.morning_systolic) { const el = document.getElementById('morningSys'); if (el) el.value = d.morning_systolic; }
+      if (d.morning_diastolic) { const el = document.getElementById('morningDia'); if (el) el.value = d.morning_diastolic; }
+      if (d.morning_temp) { const el = document.getElementById('morningTemp'); if (el) el.value = d.morning_temp; }
+      if (d.morning_time) { const el = document.getElementById('morningTime'); if (el) el.value = d.morning_time; }
 
-      if (d.evening_systolic) document.getElementById('eveningSys').value = d.evening_systolic;
-      if (d.evening_diastolic) document.getElementById('eveningDia').value = d.evening_diastolic;
-      if (d.evening_temp) document.getElementById('eveningTemp').value = d.evening_temp;
-      if (d.evening_time) document.getElementById('eveningTime').value = d.evening_time;
+      if (d.evening_systolic) { const el = document.getElementById('eveningSys'); if (el) el.value = d.evening_systolic; }
+      if (d.evening_diastolic) { const el = document.getElementById('eveningDia'); if (el) el.value = d.evening_diastolic; }
+      if (d.evening_temp) { const el = document.getElementById('eveningTemp'); if (el) el.value = d.evening_temp; }
+      if (d.evening_time) { const el = document.getElementById('eveningTime'); if (el) el.value = d.evening_time; }
 
-      if (d.condition_memo) document.getElementById('conditionMemo').value = d.condition_memo;
-      if (d.meal_memo) document.getElementById('mealMemo').value = d.meal_memo;
-      if (d.stool_count !== undefined) document.getElementById('stoolCount').value = d.stool_count;
+      if (d.condition_memo) { const el = document.getElementById('conditionMemo'); if (el) el.value = d.condition_memo; }
+      if (d.meal_memo) { const el = document.getElementById('mealMemo'); if (el) el.value = d.meal_memo; }
+      if (d.stool_count !== undefined) { const el = document.getElementById('stoolCount'); if (el) el.value = d.stool_count; }
 
       if (d.condition) {
         this.selectedCondition = d.condition;
@@ -419,9 +442,9 @@ class App {
       }
 
       this.validateHealthInputs();
-      document.getElementById('todayStatusBadge').innerHTML = `<span class="badge badge-green">✔ 오늘 기록 작성 완료</span>`;
+      this.updateStatusBadge(true);
     } else {
-      document.getElementById('todayStatusBadge').innerHTML = `<span class="badge badge-warning">⚠ 오늘 기록 미작성</span>`;
+      this.updateStatusBadge(false);
     }
 
     this.loadRecentHistory();
@@ -440,6 +463,7 @@ class App {
   // 최근 7일 작성 이력 로드
   async loadRecentHistory() {
     const user = store.currentUser;
+    if (!user) return;
     const historyList = document.getElementById('recentHistoryList');
     if (!historyList) return;
 
@@ -453,7 +477,7 @@ class App {
 
     const sorted = [...records].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 7);
     historyList.innerHTML = sorted.map(r => `
-      <div style="display:flex; justify-shadow:space-between; align-items:center; padding: 10px 14px; background: rgba(255,255,255,0.7); border-radius: 12px; margin-bottom: 8px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; padding: 10px 14px; background: rgba(255,255,255,0.7); border-radius: 12px; margin-bottom: 8px;">
         <div>
           <span style="font-weight: 700; color: var(--text-dark);">${r.date}</span>
           <span class="badge badge-blue" style="margin-left: 8px;">${r.condition || '기록'}</span>
@@ -466,23 +490,39 @@ class App {
   // 케어 기록 저장
   async saveCareRecord() {
     const user = store.currentUser;
-    const careData = {
-      morning_systolic: parseFloat(document.getElementById('morningSys').value) || null,
-      morning_diastolic: parseFloat(document.getElementById('morningDia').value) || null,
-      morning_temp: parseFloat(document.getElementById('morningTemp').value) || null,
-      morning_time: document.getElementById('morningTime').value,
+    if (!user) return;
 
-      evening_systolic: parseFloat(document.getElementById('eveningSys').value) || null,
-      evening_diastolic: parseFloat(document.getElementById('eveningDia').value) || null,
-      evening_temp: parseFloat(document.getElementById('eveningTemp').value) || null,
-      evening_time: document.getElementById('eveningTime').value,
+    const morningSysEl = document.getElementById('morningSys');
+    const morningDiaEl = document.getElementById('morningDia');
+    const morningTempEl = document.getElementById('morningTemp');
+    const morningTimeEl = document.getElementById('morningTime');
+
+    const eveningSysEl = document.getElementById('eveningSys');
+    const eveningDiaEl = document.getElementById('eveningDia');
+    const eveningTempEl = document.getElementById('eveningTemp');
+    const eveningTimeEl = document.getElementById('eveningTime');
+
+    const conditionMemoEl = document.getElementById('conditionMemo');
+    const mealMemoEl = document.getElementById('mealMemo');
+    const stoolCountEl = document.getElementById('stoolCount');
+
+    const careData = {
+      morning_systolic: morningSysEl ? parseFloat(morningSysEl.value) || null : null,
+      morning_diastolic: morningDiaEl ? parseFloat(morningDiaEl.value) || null : null,
+      morning_temp: morningTempEl ? parseFloat(morningTempEl.value) || null : null,
+      morning_time: morningTimeEl ? morningTimeEl.value : '',
+
+      evening_systolic: eveningSysEl ? parseFloat(eveningSysEl.value) || null : null,
+      evening_diastolic: eveningDiaEl ? parseFloat(eveningDiaEl.value) || null : null,
+      evening_temp: eveningTempEl ? parseFloat(eveningTempEl.value) || null : null,
+      evening_time: eveningTimeEl ? eveningTimeEl.value : '',
 
       condition: this.selectedCondition,
-      condition_memo: document.getElementById('conditionMemo').value.trim(),
+      condition_memo: conditionMemoEl ? conditionMemoEl.value.trim() : '',
       meal_status: this.selectedMeal,
-      meal_memo: document.getElementById('mealMemo').value.trim(),
+      meal_memo: mealMemoEl ? mealMemoEl.value.trim() : '',
 
-      stool_count: parseInt(document.getElementById('stoolCount').value) || 0,
+      stool_count: stoolCountEl ? parseInt(stoolCountEl.value) || 0 : 0,
       stool_type: this.selectedStoolType,
       updated_by: user.user_id
     };
@@ -492,7 +532,7 @@ class App {
 
     if (res.success) {
       this.showToast('일일 케어 기록이 성공적으로 저장되었습니다!', 'success');
-      document.getElementById('todayStatusBadge').innerHTML = `<span class="badge badge-green">✔ 오늘 기록 작성 완료</span>`;
+      this.updateStatusBadge(true);
       this.loadRecentHistory();
     } else {
       this.showToast(res.message || '저장 실패', 'danger');
@@ -502,7 +542,9 @@ class App {
   // 가족 대시보드 데이터 로드
   async loadFamilyDashboard() {
     const user = store.currentUser;
-    document.getElementById('familyDateLabel').textContent = this.currentDateStr;
+    if (!user) return;
+
+    this.updateStatusDate(this.currentDateStr);
 
     this.showToast('오늘의 케어 현황을 불러오는 중...', 'info');
     const res = await gasApi.getDailyCare(user.elder_code, this.currentDateStr);
@@ -511,46 +553,50 @@ class App {
 
     if (res.success && res.data) {
       const d = res.data;
-      document.getElementById('familyStatusBadge').innerHTML = `<span class="badge badge-green">✔ 오늘 기록 작성 완료</span>`;
+      this.updateStatusBadge(true);
       
-      summaryCard.innerHTML = `
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px;">
-          <div style="background: rgba(255,255,255,0.85); padding: 14px; border-radius: 14px;">
-            <div style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600;">🌅 아침 혈압/체온</div>
-            <div style="font-size: 1.1rem; font-weight: 700; color: var(--primary-blue); margin-top: 4px;">
-              ${d.morning_systolic ? `${d.morning_systolic}/${d.morning_diastolic} mmHg` : '미입력'}
+      if (summaryCard) {
+        summaryCard.innerHTML = `
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px;">
+            <div style="background: rgba(255,255,255,0.85); padding: 14px; border-radius: 14px;">
+              <div style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600;">🌅 아침 혈압/체온</div>
+              <div style="font-size: 1.1rem; font-weight: 700; color: var(--primary-blue); margin-top: 4px;">
+                ${d.morning_systolic ? `${d.morning_systolic}/${d.morning_diastolic} mmHg` : '미입력'}
+              </div>
+              <div style="font-size: 0.95rem; font-weight: 600; color: ${d.morning_temp >= 37.5 ? 'var(--alert-red)' : 'var(--text-dark)'};">
+                ${d.morning_temp ? `${d.morning_temp} ℃` : ''}
+              </div>
             </div>
-            <div style="font-size: 0.95rem; font-weight: 600; color: ${d.morning_temp >= 37.5 ? 'var(--alert-red)' : 'var(--text-dark)'};">
-              ${d.morning_temp ? `${d.morning_temp} ℃` : ''}
+
+            <div style="background: rgba(255,255,255,0.85); padding: 14px; border-radius: 14px;">
+              <div style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600;">🌙 저녁 혈압/체온</div>
+              <div style="font-size: 1.1rem; font-weight: 700; color: var(--primary-blue); margin-top: 4px;">
+                ${d.evening_systolic ? `${d.evening_systolic}/${d.evening_diastolic} mmHg` : '미입력'}
+              </div>
+              <div style="font-size: 0.95rem; font-weight: 600; color: ${d.evening_temp >= 37.5 ? 'var(--alert-red)' : 'var(--text-dark)'};">
+                ${d.evening_temp ? `${d.evening_temp} ℃` : ''}
+              </div>
             </div>
           </div>
 
-          <div style="background: rgba(255,255,255,0.85); padding: 14px; border-radius: 14px;">
-            <div style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600;">🌙 저녁 혈압/체온</div>
-            <div style="font-size: 1.1rem; font-weight: 700; color: var(--primary-blue); margin-top: 4px;">
-              ${d.evening_systolic ? `${d.evening_systolic}/${d.evening_diastolic} mmHg` : '미입력'}
-            </div>
-            <div style="font-size: 0.95rem; font-weight: 600; color: ${d.evening_temp >= 37.5 ? 'var(--alert-red)' : 'var(--text-dark)'};">
-              ${d.evening_temp ? `${d.evening_temp} ℃` : ''}
-            </div>
+          <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+            <span class="badge badge-blue">😀 컨디션: ${d.condition || '미입력'}</span>
+            <span class="badge badge-blue">🍚 식사: ${d.meal_status || '미입력'}</span>
+            <span class="badge badge-blue">🚽 배변: ${d.stool_count || 0}회 (${d.stool_type || '형태미선택'})</span>
           </div>
-        </div>
-
-        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-          <span class="badge badge-blue">😀 컨디션: ${d.condition || '미입력'}</span>
-          <span class="badge badge-blue">🍚 식사: ${d.meal_status || '미입력'}</span>
-          <span class="badge badge-blue">🚽 배변: ${d.stool_count || 0}회 (${d.stool_type || '형태미선택'})</span>
-        </div>
-      `;
+        `;
+      }
     } else {
-      document.getElementById('familyStatusBadge').innerHTML = `<span class="badge badge-warning">⚠ 오늘 기록 미작성</span>`;
-      summaryCard.innerHTML = `
-        <div style="text-align: center; padding: 24px; color: var(--text-muted);">
-          <div style="font-size: 2.5rem; margin-bottom: 8px;">📋</div>
-          <p style="font-weight: 600;">오늘 작성된 케어 기록이 아직 없습니다.</p>
-          <p style="font-size: 0.85rem; margin-top: 4px;">요양보호사님이 입력하면 자동으로 업데이트됩니다.</p>
-        </div>
-      `;
+      this.updateStatusBadge(false);
+      if (summaryCard) {
+        summaryCard.innerHTML = `
+          <div style="text-align: center; padding: 24px; color: var(--text-muted);">
+            <div style="font-size: 2.5rem; margin-bottom: 8px;">📋</div>
+            <p style="font-weight: 600;">오늘 작성된 케어 기록이 아직 없습니다.</p>
+            <p style="font-size: 0.85rem; margin-top: 4px;">요양보호사님이 입력하면 자동으로 업데이트됩니다.</p>
+          </div>
+        `;
+      }
     }
 
     this.refreshFamilyCalendar();
