@@ -356,6 +356,26 @@
               </div>
             </div>
 
+            <!-- 💊 일일 투약 체크리스트 -->
+            <div class="form-group">
+              <label class="form-label">💊 일일 투약 체크 (아침 / 점심 / 저녁)</label>
+              <div id="medicationChips" class="chip-group" style="grid-template-columns: repeat(3, 1fr);">
+                <div class="chip" data-val="morning" id="medMorningChip">
+                  <span class="chip-emoji">🌅</span>
+                  <span class="chip-label">아침 복용</span>
+                </div>
+                <div class="chip" data-val="lunch" id="medLunchChip">
+                  <span class="chip-emoji">☀️</span>
+                  <span class="chip-label">점심 복용</span>
+                </div>
+                <div class="chip" data-val="evening" id="medEveningChip">
+                  <span class="chip-emoji">🌙</span>
+                  <span class="chip-label">저녁 복용</span>
+                </div>
+              </div>
+              <input type="text" id="medicationMemo" class="glass-input" style="margin-top: 10px;" placeholder="투약 특이사항 메모 (예: 아침 혈압약, 점심 당뇨약 복용)">
+            </div>
+
             <button type="submit" class="btn btn-primary" style="margin-top: 20px; font-size: 1.1rem; height: 54px;">
               💾 오늘 케어 기록 저장하기
             </button>

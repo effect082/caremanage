@@ -470,7 +470,45 @@ class App {
       this.selectChipByValue('stoolTypeChips', d.stool_type);
     }
 
+    // 투약 복원
+    const medMorningChip = document.getElementById('medMorningChip');
+    const medLunchChip = document.getElementById('medLunchChip');
+    const medEveningChip = document.getElementById('medEveningChip');
+    const medMemoEl = document.getElementById('medicationMemo');
+
+    if (medMorningChip) {
+      if (d.medication_morning === true || d.medication_morning === 'Y' || d.medication_morning === 'true') medMorningChip.classList.add('selected');
+      else medMorningChip.classList.remove('selected');
+    }
+    if (medLunchChip) {
+      if (d.medication_lunch === true || d.medication_lunch === 'Y' || d.medication_lunch === 'true') medLunchChip.classList.add('selected');
+      else medLunchChip.classList.remove('selected');
+    }
+    if (medEveningChip) {
+      if (d.medication_evening === true || d.medication_evening === 'Y' || d.medication_evening === 'true') medEveningChip.classList.add('selected');
+      else medEveningChip.classList.remove('selected');
+    }
+    if (medMemoEl && d.medication_memo !== undefined) {
+      medMemoEl.value = d.medication_memo;
+    }
+
     this.validateHealthInputs();
+  }
+
+  formatMedicationStatus(d) {
+    if (!d) return '미복용';
+    const m = (d.medication_morning === true || d.medication_morning === 'Y' || d.medication_morning === 'true');
+    const l = (d.medication_lunch === true || d.medication_lunch === 'Y' || d.medication_lunch === 'true');
+    const e = (d.medication_evening === true || d.medication_evening === 'Y' || d.medication_evening === 'true');
+
+    const list = [];
+    if (m) list.push('아침');
+    if (l) list.push('점심');
+    if (e) list.push('저녁');
+
+    if (list.length === 0) return '미복용';
+    if (list.length === 3) return '아침·점심·저녁 완료';
+    return `${list.join('·')} 복용`;
   }
 
   renderFamilySummaryCard(d) {
@@ -498,6 +536,7 @@ class App {
     const rawCount = parseInt(d.stool_count, 10);
     const cleanStool = isNaN(rawCount) || rawCount < 0 ? 0 : (rawCount > 10 ? 1 : rawCount);
     const stoolText = cleanStool === 0 ? '0회 (미배변)' : `${cleanStool}회 (${d.stool_type || '부드러움'})`;
+    const medText = this.formatMedicationStatus(d);
 
     summaryCard.innerHTML = `
       <div style="margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;">
@@ -531,6 +570,7 @@ class App {
         <span class="badge badge-blue">😀 컨디션: ${d.condition || '미입력'}</span>
         <span class="badge badge-blue">🍚 식사: ${d.meal_status || '미입력'}</span>
         <span class="badge badge-blue">🚽 배변: ${stoolText}</span>
+        <span class="badge badge-blue">💊 투약: ${medText}</span>
       </div>
 
       <div style="margin-top: 16px;">
@@ -650,6 +690,11 @@ class App {
       cleanStoolCount = isNaN(parsed) || parsed < 0 ? 0 : Math.min(10, parsed);
     }
 
+    const medMorningChip = document.getElementById('medMorningChip');
+    const medLunchChip = document.getElementById('medLunchChip');
+    const medEveningChip = document.getElementById('medEveningChip');
+    const medMemoEl = document.getElementById('medicationMemo');
+
     const careData = {
       morning_systolic: morningSysEl ? parseFloat(morningSysEl.value) || null : null,
       morning_diastolic: morningDiaEl ? parseFloat(morningDiaEl.value) || null : null,
@@ -668,6 +713,12 @@ class App {
 
       stool_count: cleanStoolCount,
       stool_type: this.selectedStoolType,
+
+      medication_morning: medMorningChip ? medMorningChip.classList.contains('selected') : false,
+      medication_lunch: medLunchChip ? medLunchChip.classList.contains('selected') : false,
+      medication_evening: medEveningChip ? medEveningChip.classList.contains('selected') : false,
+      medication_memo: medMemoEl ? medMemoEl.value.trim() : '',
+
       updated_by: user.user_id,
       updated_by_name: user.name,
       updated_role: user.role

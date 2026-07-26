@@ -242,6 +242,14 @@ class UIComponents {
         ? `<span class="badge badge-blue">👨‍👩‍👧 가족 직접 작성${authorText}</span>`
         : `<span class="badge badge-green">🧑‍⚕️ 요양보호사 작성${authorText}</span>`;
 
+      const getMedBadge = (r) => {
+        const m = (r.medication_morning === true || r.medication_morning === 'Y' || r.medication_morning === 'true');
+        const l = (r.medication_lunch === true || r.medication_lunch === 'Y' || r.medication_lunch === 'true');
+        const e = (r.medication_evening === true || r.medication_evening === 'Y' || r.medication_evening === 'true');
+
+        return `아침 ${m ? '✔' : '❌'} | 점심 ${l ? '✔' : '❌'} | 저녁 ${e ? '✔' : '❌'}`;
+      };
+
       modalContent.innerHTML = `
         <div style="display: flex; flex-direction: column; gap: 16px;">
           <!-- 작성자 구분 바 -->
@@ -275,7 +283,7 @@ class UIComponents {
             </div>
           </div>
 
-          <!-- 컨디션 & 식사 & 배변 -->
+          <!-- 컨디션 & 식사 & 배변 & 투약 -->
           <div class="glass-card" style="padding: 16px; margin: 0; background: rgba(255,255,255,0.9);">
             <div style="margin-bottom: 10px; display: flex; justify-content: space-between;">
               <span style="font-weight: 600;">😀 하루 컨디션:</span>
@@ -293,6 +301,12 @@ class UIComponents {
               <span style="font-weight: 600;">🚽 배변 상태:</span>
               <span style="font-weight: 700; color: var(--primary-blue);">${stoolDisplay}</span>
             </div>
+
+            <div style="margin-top: 12px; display: flex; justify-content: space-between; align-items: center; border-top: 1px dashed var(--border-subtle); padding-top: 10px;">
+              <span style="font-weight: 600;">💊 투약 체크:</span>
+              <span style="font-weight: 700; color: var(--primary-blue); font-size: 0.88rem;">${getMedBadge(record)}</span>
+            </div>
+            ${record.medication_memo ? `<p style="font-size: 0.9rem; color: var(--text-medium); background: #F4F7FF; padding: 8px 12px; border-radius: 8px; margin-top: 6px;">"${record.medication_memo}"</p>` : ''}
           </div>
         </div>
       `;

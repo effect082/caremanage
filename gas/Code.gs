@@ -184,7 +184,9 @@ function handleSaveDailyCare(ss, p) {
     'morning_systolic', 'morning_diastolic', 'morning_temp', 'morning_time',
     'evening_systolic', 'evening_diastolic', 'evening_temp', 'evening_time',
     'condition', 'condition_memo', 'meal_status', 'meal_memo',
-    'stool_count', 'stool_type', 'updated_by', 'updated_by_name', 'updated_role', 'updated_at'
+    'stool_count', 'stool_type',
+    'medication_morning', 'medication_lunch', 'medication_evening', 'medication_memo',
+    'updated_by', 'updated_by_name', 'updated_role', 'updated_at'
   ];
 
   var rowIdx = -1;
@@ -203,12 +205,19 @@ function handleSaveDailyCare(ss, p) {
   var parsedStool = parseInt(p.stool_count, 10);
   var cleanStool = isNaN(parsedStool) || parsedStool < 0 ? 0 : Math.min(10, parsedStool);
 
+  var medMorning = (p.medication_morning === true || p.medication_morning === 'Y' || p.medication_morning === 'true') ? 'Y' : 'N';
+  var medLunch = (p.medication_lunch === true || p.medication_lunch === 'Y' || p.medication_lunch === 'true') ? 'Y' : 'N';
+  var medEvening = (p.medication_evening === true || p.medication_evening === 'Y' || p.medication_evening === 'true') ? 'Y' : 'N';
+  var medMemo = p.medication_memo || '';
+
   var rowData = [
     recordId, p.elder_code, p.date,
     p.morning_systolic || '', p.morning_diastolic || '', p.morning_temp || '', p.morning_time || '',
     p.evening_systolic || '', p.evening_diastolic || '', p.evening_temp || '', p.evening_time || '',
     p.condition || '', p.condition_memo || '', p.meal_status || '', p.meal_memo || '',
-    cleanStool, p.stool_type || '', p.updated_by || '', updatedByName, updatedRole, updatedAt
+    cleanStool, p.stool_type || '',
+    medMorning, medLunch, medEvening, medMemo,
+    p.updated_by || '', updatedByName, updatedRole, updatedAt
   ];
 
   if (rowIdx > 0) {
