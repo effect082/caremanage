@@ -142,14 +142,6 @@ class GasApiService {
       };
     }
 
-      return {
-        success: true,
-        user: newUser,
-        elder: elder,
-        message: '로컬 동기화 모드로 가입되었습니다.'
-      };
-    }
-
     return res;
   }
 
