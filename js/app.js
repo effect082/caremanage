@@ -61,12 +61,26 @@ class App {
     const dashDateLabel = document.getElementById('dashDateLabel');
     if (dashDateLabel) dashDateLabel.textContent = this.currentDateStr;
 
+    // 요양보호사 및 가족 회원 모두 케어 작성 탭 이용 가능 (주말/휴가 가족 직접 입력)
+    if (navCaregiverWriteBtn) {
+      navCaregiverWriteBtn.style.display = 'flex';
+      const labelSpan = navCaregiverWriteBtn.querySelector('span');
+      if (labelSpan) {
+        labelSpan.textContent = user.role === '가족' ? '케어 작성 (주말/휴가)' : '케어 작성';
+      }
+    }
+
+    const noticeText = document.getElementById('writeNoticeText');
+    if (noticeText) {
+      noticeText.textContent = user.role === '가족' 
+        ? '토요일·일요일 주말이나 요양보호사 휴가 시에는 가족이 직접 케어 현황(혈압, 체온, 식사, 배변 등)을 입력하실 수 있습니다.'
+        : '평일에는 요양보호사님이 작성하시며, 토요일·일요일 주말이나 휴가 시에는 가족이 직접 케어 현황을 입력할 수 있습니다.';
+    }
+
     if (user.role === '요양보호사') {
-      if (navCaregiverWriteBtn) navCaregiverWriteBtn.style.display = 'flex';
       this.switchView('caregiverWriteView');
       this.loadCaregiverDashboard();
     } else {
-      if (navCaregiverWriteBtn) navCaregiverWriteBtn.style.display = 'none';
       this.switchView('todaySummaryView');
       this.loadFamilyDashboard();
     }
@@ -86,7 +100,9 @@ class App {
       }
     });
 
-    if (targetView === 'todaySummaryView') {
+    if (targetView === 'caregiverWriteView') {
+      this.loadCaregiverDashboard();
+    } else if (targetView === 'todaySummaryView') {
       this.loadFamilyDashboard();
     } else if (targetView === 'calendarView') {
       this.refreshFamilyCalendar();
@@ -544,7 +560,8 @@ class App {
 
       stool_count: stoolCountEl ? parseInt(stoolCountEl.value) || 0 : 0,
       stool_type: this.selectedStoolType,
-      updated_by: user.user_id
+      updated_by: user.user_id,
+      updated_role: user.role
     };
 
     this.showToast('기록을 저장하고 있습니다...', 'info');
@@ -575,8 +592,17 @@ class App {
       const d = res.data;
       this.updateStatusBadge(true);
       
+      const roleBadge = d.updated_role === '가족'
+        ? `<span class="badge badge-blue">👨‍👩‍👧 가족 직접 작성 (주말/휴가)</span>`
+        : `<span class="badge badge-green">🧑‍⚕️ 요양보호사 작성</span>`;
+
       if (summaryCard) {
         summaryCard.innerHTML = `
+          <div style="margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;">
+            <span class="text-muted" style="font-size: 0.85rem; font-weight: 600;">작성자 구별:</span>
+            ${roleBadge}
+          </div>
+
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px;">
             <div style="background: rgba(255,255,255,0.85); padding: 14px; border-radius: 14px;">
               <div style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600;">🌅 아침 혈압/체온</div>
@@ -604,6 +630,10 @@ class App {
             <span class="badge badge-blue">🍚 식사: ${d.meal_status || '미입력'}</span>
             <span class="badge badge-blue">🚽 배변: ${d.stool_count || 0}회 (${d.stool_type || '형태미선택'})</span>
           </div>
+
+          <div style="margin-top: 16px;">
+            <button class="btn btn-secondary" onclick="app.switchView('caregiverWriteView')" style="width: 100%;">✏️ 오늘 기록 수정 / 추가 작성하기</button>
+          </div>
         `;
       }
     } else {
@@ -613,7 +643,8 @@ class App {
           <div style="text-align: center; padding: 24px; color: var(--text-muted);">
             <div style="font-size: 2.5rem; margin-bottom: 8px;">📋</div>
             <p style="font-weight: 600;">오늘 작성된 케어 기록이 아직 없습니다.</p>
-            <p style="font-size: 0.85rem; margin-top: 4px;">요양보호사님이 입력하면 자동으로 업데이트됩니다.</p>
+            <p style="font-size: 0.85rem; margin-top: 4px; margin-bottom: 16px;">주말(토/일) 및 요양보호사 휴가 시에는 가족이 직접 케어 기록을 작성하실 수 있습니다.</p>
+            <button class="btn btn-primary" onclick="app.switchView('caregiverWriteView')" style="max-width: 280px; margin: 0 auto;">✏️ 가족 직접 케어 작성하기 (주말/휴가)</button>
           </div>
         `;
       }

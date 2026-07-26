@@ -183,8 +183,13 @@
         </div>
       </div>
 
-      <!-- Pane 1: 케어 작성 뷰 (요양보호사 전용) -->
+      <!-- Pane 1: 케어 작성 뷰 (요양보호사 & 주말/휴가 가족 공용) -->
       <div id="caregiverWriteView" class="view-pane">
+        <div id="writeNoticeBanner" class="glass-card" style="padding: 12px 18px; background: rgba(47,111,237,0.08); border: 1px solid rgba(47,111,237,0.2); margin-bottom: 16px; font-weight: 600; font-size: 0.9rem; color: var(--primary-blue); display: flex; align-items: center; gap: 8px;">
+          <span>💡</span>
+          <span id="writeNoticeText">평일에는 요양보호사님이 작성하시며, 토요일·일요일 주말이나 요양보호사 휴가 시에는 가족이 직접 케어 현황을 입력할 수 있습니다.</span>
+        </div>
+
         <form id="caregiverForm">
           <div class="grid-2col">
             
