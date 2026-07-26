@@ -52,10 +52,39 @@ class GasApiService {
       if (!response.ok) {
         throw new Error(`HTTP Error: ${response.status}`);
       }
-      const data = await response.json();
-      return data;
+      const text = await response.text();
+      try {
+        const data = JSON.parse(text);
+        return data;
+      } catch (jsonErr) {
+        throw new Error("Invalid JSON response from primary endpoint");
+      }
     } catch (error) {
-      console.warn(`GAS API Warning (${action}):`, error.message);
+      console.warn(`GAS API Primary Endpoint Warning (${action}):`, error.message);
+
+      // 보조(ALT) GAS 엔드포인트 자동 페일오버 재시도
+      if (CONFIG.GAS_URL_ALT && this.baseUrl !== CONFIG.GAS_URL_ALT) {
+        try {
+          let altUrl = `${CONFIG.GAS_URL_ALT}?action=${encodeURIComponent(action)}`;
+          if (method === 'GET') {
+            Object.keys(params).forEach(key => {
+              if (params[key] !== undefined && params[key] !== null) {
+                altUrl += `&${encodeURIComponent(key)}=${encodeURIComponent(params[key])}`;
+              }
+            });
+          }
+          const altResp = await fetch(altUrl, fetchOptions);
+          if (altResp.ok) {
+            const altText = await altResp.text();
+            const altData = JSON.parse(altText);
+            console.log(`GAS API Alt Endpoint Success (${action})`);
+            return altData;
+          }
+        } catch (altErr) {
+          console.warn(`GAS API Alt Endpoint Warning (${action}):`, altErr.message);
+        }
+      }
+
       return { success: false, isOfflineFallback: true, error: error.message };
     }
   }
