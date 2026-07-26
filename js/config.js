@@ -3,11 +3,11 @@
  */
 
 const CONFIG = {
-  // Primary Active GAS Web App Endpoint
-  GAS_URL: 'https://script.google.com/macros/s/AKfycbxaF4BbsWz40cd2iGd_EENS1xCnufLl41BfSNNcJsZBu703Xuq_1rYxzRc6rMyTEFrZ/exec',
+  // Primary Active GAS Web App Endpoint (Newly Deployed)
+  GAS_URL: 'https://script.google.com/macros/s/AKfycbyhJeD7lPCIqdBQK4ujc-GCMSm7H4Ao93laFpX1zuJZjB6OF_Em9B0EsExwLajVsqlJ/exec',
   
-  // Secondary GAS Endpoint
-  GAS_URL_ALT: 'https://script.google.com/macros/s/AKfycbw92rv44K3MMQvN7UyzbQpEQt7V-q72rY0tt_ftI4-XoXNaMOeaJpewyPPw3dGjhA8/exec',
+  // Secondary GAS Endpoints
+  GAS_URL_ALT: 'https://script.google.com/macros/s/AKfycbxaF4BbsWz40cd2iGd_EENS1xCnufLl41BfSNNcJsZBu703Xuq_1rYxzRc6rMyTEFrZ/exec',
   
   // Health Thresholds
   THRESHOLDS: {
