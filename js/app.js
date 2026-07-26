@@ -681,6 +681,23 @@ class App {
     });
   }
 
+  toggleMedicationChip(chipEl) {
+    if (!chipEl) return;
+    chipEl.classList.toggle('selected');
+  }
+
+  setupMultiToggleChips(containerId) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+
+    container.querySelectorAll('.chip').forEach(chip => {
+      chip.onclick = (e) => {
+        const targetChip = e.target.closest('.chip') || chip;
+        this.toggleMedicationChip(targetChip);
+      };
+    });
+  }
+
   // 최근 7일 작성 이력 로드
   async loadRecentHistory() {
     const user = store.currentUser;
@@ -723,7 +740,7 @@ class App {
     });
   }
 
-  // 케어 기록 저장 (Optimistic UI 0ms 즉각 저장)
+  // 케어 기록 저장 (Optimistic UI 0ms 즉각 저장 & 기존 데이터 재저장 보장)
   async saveCareRecord() {
     const user = store.currentUser;
     if (!user) return;
@@ -753,29 +770,32 @@ class App {
     const medEveningChip = document.getElementById('medEveningChip');
     const medMemoEl = document.getElementById('medicationMemo');
 
+    // 기존에 작성된 데이터와 유기적 병합 (재저장 시 데이터 유지)
+    const existingRec = store.getLocalRecord(user.elder_code, this.currentDateStr) || {};
+
     const careData = {
-      morning_systolic: morningSysEl ? parseFloat(morningSysEl.value) || null : null,
-      morning_diastolic: morningDiaEl ? parseFloat(morningDiaEl.value) || null : null,
-      morning_temp: morningTempEl ? parseFloat(morningTempEl.value) || null : null,
-      morning_time: morningTimeEl ? morningTimeEl.value : '',
+      morning_systolic: (morningSysEl && morningSysEl.value !== '') ? parseFloat(morningSysEl.value) : (existingRec.morning_systolic || null),
+      morning_diastolic: (morningDiaEl && morningDiaEl.value !== '') ? parseFloat(morningDiaEl.value) : (existingRec.morning_diastolic || null),
+      morning_temp: (morningTempEl && morningTempEl.value !== '') ? parseFloat(morningTempEl.value) : (existingRec.morning_temp || null),
+      morning_time: (morningTimeEl && morningTimeEl.value !== '') ? morningTimeEl.value : (existingRec.morning_time || ''),
 
-      evening_systolic: eveningSysEl ? parseFloat(eveningSysEl.value) || null : null,
-      evening_diastolic: eveningDiaEl ? parseFloat(eveningDiaEl.value) || null : null,
-      evening_temp: eveningTempEl ? parseFloat(eveningTempEl.value) || null : null,
-      evening_time: eveningTimeEl ? eveningTimeEl.value : '',
+      evening_systolic: (eveningSysEl && eveningSysEl.value !== '') ? parseFloat(eveningSysEl.value) : (existingRec.evening_systolic || null),
+      evening_diastolic: (eveningDiaEl && eveningDiaEl.value !== '') ? parseFloat(eveningDiaEl.value) : (existingRec.evening_diastolic || null),
+      evening_temp: (eveningTempEl && eveningTempEl.value !== '') ? parseFloat(eveningTempEl.value) : (existingRec.evening_temp || null),
+      evening_time: (eveningTimeEl && eveningTimeEl.value !== '') ? eveningTimeEl.value : (existingRec.evening_time || ''),
 
-      condition: this.selectedCondition,
-      condition_memo: conditionMemoEl ? conditionMemoEl.value.trim() : '',
-      meal_status: this.selectedMeal,
-      meal_memo: mealMemoEl ? mealMemoEl.value.trim() : '',
+      condition: this.selectedCondition || existingRec.condition || '상 (양호)',
+      condition_memo: (conditionMemoEl && conditionMemoEl.value.trim() !== '') ? conditionMemoEl.value.trim() : (existingRec.condition_memo || ''),
+      meal_status: this.selectedMeal || existingRec.meal_status || '잘 드심',
+      meal_memo: (mealMemoEl && mealMemoEl.value.trim() !== '') ? mealMemoEl.value.trim() : (existingRec.meal_memo || ''),
 
       stool_count: cleanStoolCount,
-      stool_type: this.selectedStoolType,
+      stool_type: this.selectedStoolType || existingRec.stool_type || '부드러움',
 
-      medication_morning: medMorningChip ? medMorningChip.classList.contains('selected') : false,
-      medication_lunch: medLunchChip ? medLunchChip.classList.contains('selected') : false,
-      medication_evening: medEveningChip ? medEveningChip.classList.contains('selected') : false,
-      medication_memo: medMemoEl ? medMemoEl.value.trim() : '',
+      medication_morning: medMorningChip ? medMorningChip.classList.contains('selected') : (existingRec.medication_morning || false),
+      medication_lunch: medLunchChip ? medLunchChip.classList.contains('selected') : (existingRec.medication_lunch || false),
+      medication_evening: medEveningChip ? medEveningChip.classList.contains('selected') : (existingRec.medication_evening || false),
+      medication_memo: (medMemoEl && medMemoEl.value.trim() !== '') ? medMemoEl.value.trim() : (existingRec.medication_memo || ''),
 
       updated_by: user.user_id,
       updated_by_name: user.name,

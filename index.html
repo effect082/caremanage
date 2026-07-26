@@ -360,15 +360,15 @@
             <div class="form-group">
               <label class="form-label">💊 일일 투약 체크 (아침 / 점심 / 저녁)</label>
               <div id="medicationChips" class="chip-group" style="grid-template-columns: repeat(3, 1fr);">
-                <div class="chip" data-val="morning" id="medMorningChip">
+                <div class="chip" data-val="morning" id="medMorningChip" onclick="app.toggleMedicationChip(this)">
                   <span class="chip-emoji">🌅</span>
                   <span class="chip-label">아침 복용</span>
                 </div>
-                <div class="chip" data-val="lunch" id="medLunchChip">
+                <div class="chip" data-val="lunch" id="medLunchChip" onclick="app.toggleMedicationChip(this)">
                   <span class="chip-emoji">☀️</span>
                   <span class="chip-label">점심 복용</span>
                 </div>
-                <div class="chip" data-val="evening" id="medEveningChip">
+                <div class="chip" data-val="evening" id="medEveningChip" onclick="app.toggleMedicationChip(this)">
                   <span class="chip-emoji">🌙</span>
                   <span class="chip-label">저녁 복용</span>
                 </div>
