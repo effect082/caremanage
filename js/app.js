@@ -35,16 +35,15 @@ class App {
   checkAuthAndRender() {
     const user = store.currentUser;
     const authSection = document.getElementById('authSection');
-    const caregiverSection = document.getElementById('caregiverSection');
-    const familySection = document.getElementById('familySection');
+    const dashboardSection = document.getElementById('dashboardSection');
     const bottomNav = document.getElementById('bottomNav');
     const userHeaderInfo = document.getElementById('userHeaderInfo');
+    const navCaregiverWriteBtn = document.getElementById('navCaregiverWriteBtn');
 
     if (!user) {
       authSection.style.display = 'block';
-      caregiverSection.style.display = 'none';
-      familySection.style.display = 'none';
-      bottomNav.style.display = 'none';
+      if (dashboardSection) dashboardSection.style.display = 'none';
+      if (bottomNav) bottomNav.style.display = 'none';
       if (userHeaderInfo) userHeaderInfo.style.display = 'none';
       return;
     }
@@ -55,18 +54,44 @@ class App {
       document.getElementById('headerElderName').textContent = user.elder_name || `${user.name} 댁 어르신`;
     }
 
+    authSection.style.display = 'none';
+    if (dashboardSection) dashboardSection.style.display = 'block';
+    if (bottomNav) bottomNav.style.display = 'flex';
+
+    const dashDateLabel = document.getElementById('dashDateLabel');
+    if (dashDateLabel) dashDateLabel.textContent = this.currentDateStr;
+
     if (user.role === '요양보호사') {
-      authSection.style.display = 'none';
-      caregiverSection.style.display = 'block';
-      familySection.style.display = 'none';
-      bottomNav.style.display = 'flex';
+      if (navCaregiverWriteBtn) navCaregiverWriteBtn.style.display = 'flex';
+      this.switchView('caregiverWriteView');
       this.loadCaregiverDashboard();
     } else {
-      authSection.style.display = 'none';
-      caregiverSection.style.display = 'none';
-      familySection.style.display = 'block';
-      bottomNav.style.display = 'flex';
+      if (navCaregiverWriteBtn) navCaregiverWriteBtn.style.display = 'none';
+      this.switchView('todaySummaryView');
       this.loadFamilyDashboard();
+    }
+  }
+
+  // 뷰 패널 전환 (요양보호사 & 가족 공용)
+  switchView(targetView) {
+    document.querySelectorAll('.view-pane').forEach(pane => pane.style.display = 'none');
+    const activePane = document.getElementById(targetView);
+    if (activePane) activePane.style.display = 'block';
+
+    document.querySelectorAll('.nav-item').forEach(item => {
+      if (item.getAttribute('data-target') === targetView) {
+        item.classList.add('active');
+      } else {
+        item.classList.remove('active');
+      }
+    });
+
+    if (targetView === 'todaySummaryView') {
+      this.loadFamilyDashboard();
+    } else if (targetView === 'calendarView') {
+      this.refreshFamilyCalendar();
+    } else if (targetView === 'trendView') {
+      this.refreshFamilyTrendChart();
     }
   }
 
@@ -77,6 +102,8 @@ class App {
       'loginKeypadGrid',
       (pin) => {
         document.getElementById('loginPinHidden').value = pin;
+        const errBox = document.getElementById('loginErrorMessage');
+        if (errBox) errBox.style.display = 'none';
       }
     );
 
@@ -85,6 +112,8 @@ class App {
       'signupKeypadGrid',
       (pin) => {
         document.getElementById('signupPinHidden').value = pin;
+        const errBox = document.getElementById('signupErrorMessage');
+        if (errBox) errBox.style.display = 'none';
       }
     );
   }
@@ -98,6 +127,11 @@ class App {
         btn.classList.add('active');
         const targetTab = btn.getAttribute('data-tab');
         
+        const loginErr = document.getElementById('loginErrorMessage');
+        const signupErr = document.getElementById('signupErrorMessage');
+        if (loginErr) loginErr.style.display = 'none';
+        if (signupErr) signupErr.style.display = 'none';
+
         if (targetTab === 'login') {
           document.getElementById('loginTabForm').style.display = 'block';
           document.getElementById('signupTabForm').style.display = 'none';
@@ -114,9 +148,27 @@ class App {
       const name = document.getElementById('loginName').value.trim();
       const role = document.querySelector('input[name="loginRole"]:checked').value;
       const pin = document.getElementById('loginPinHidden').value;
+      const loginErrBox = document.getElementById('loginErrorMessage');
 
-      if (!name || !pin || pin.length < 4) {
-        this.showToast('이름과 4자리 비밀번호(PIN)를 입력해 주세요.', 'warning');
+      if (loginErrBox) loginErrBox.style.display = 'none';
+
+      if (!name) {
+        const msg = '이름을 입력해 주세요.';
+        if (loginErrBox) {
+          loginErrBox.textContent = `⚠ ${msg}`;
+          loginErrBox.style.display = 'block';
+        }
+        this.showToast(msg, 'warning');
+        return;
+      }
+
+      if (!pin || pin.length < 4) {
+        const msg = '비밀번호 4자리(PIN)를 모두 완료해 주세요.';
+        if (loginErrBox) {
+          loginErrBox.textContent = `⚠ ${msg}`;
+          loginErrBox.style.display = 'block';
+        }
+        this.showToast(msg, 'warning');
         return;
       }
 
@@ -130,6 +182,7 @@ class App {
       const res = await gasApi.login(name, role, pin);
 
       if (res.success) {
+        if (loginErrBox) loginErrBox.style.display = 'none';
         store.setCurrentUser({
           ...res.user,
           elder_name: res.elder ? res.elder.elder_name : `${name} 댁 어르신`
@@ -137,7 +190,12 @@ class App {
         this.showToast('로그인이 완료되었습니다.', 'success');
         this.checkAuthAndRender();
       } else {
-        this.showToast(res.message || '로그인 실패', 'danger');
+        const errMsg = res.message || '가입된 이름 또는 4자리 비밀번호가 일치하지 않습니다. 이름과 PIN을 확인해 주세요.';
+        if (loginErrBox) {
+          loginErrBox.textContent = `⚠ ${errMsg}`;
+          loginErrBox.style.display = 'block';
+        }
+        this.showToast(errMsg, 'danger');
       }
 
       if (loginBtn) {
@@ -154,9 +212,17 @@ class App {
       const pin = document.getElementById('signupPinHidden').value;
       const elderCode = '';
       const elderName = '';
+      const signupErrBox = document.getElementById('signupErrorMessage');
+
+      if (signupErrBox) signupErrBox.style.display = 'none';
 
       if (!name || !pin || pin.length < 4) {
-        this.showToast('이름과 4자리 PIN 비밀번호를 완성해 주세요.', 'warning');
+        const msg = '이름과 4자리 PIN 비밀번호를 완성해 주세요.';
+        if (signupErrBox) {
+          signupErrBox.textContent = `⚠ ${msg}`;
+          signupErrBox.style.display = 'block';
+        }
+        this.showToast(msg, 'warning');
         return;
       }
 
@@ -170,16 +236,21 @@ class App {
       const res = await gasApi.signup(name, role, pin, elderCode, elderName);
 
       if (res.success) {
+        if (signupErrBox) signupErrBox.style.display = 'none';
         this.showToast('🎉 회원 가입이 완료되었습니다! 로그인해 주세요.', 'success');
         
-        // 로그인 폼으로 자동 이동 및 이름 미리 채우기
         document.getElementById('loginName').value = name;
         if (this.pinPadController) this.pinPadController.clear();
         if (this.signupPinPadController) this.signupPinPadController.clear();
         
         document.querySelector('.auth-tab-btn[data-tab="login"]').click();
       } else {
-        this.showToast(res.message || '회원가입 실패', 'danger');
+        const errMsg = res.message || '회원가입 실패';
+        if (signupErrBox) {
+          signupErrBox.textContent = `⚠ ${errMsg}`;
+          signupErrBox.style.display = 'block';
+        }
+        this.showToast(errMsg, 'danger');
       }
 
       if (signupBtn) {
@@ -198,19 +269,8 @@ class App {
     // 5. 하단 탭 네비게이션
     document.querySelectorAll('.nav-item').forEach(item => {
       item.addEventListener('click', () => {
-        document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
-        item.classList.add('active');
         const targetView = item.getAttribute('data-target');
-
-        document.querySelectorAll('.view-pane').forEach(pane => pane.style.display = 'none');
-        const activePane = document.getElementById(targetView);
-        if (activePane) activePane.style.display = 'block';
-
-        if (targetView === 'familyCalendarView') {
-          this.refreshFamilyCalendar();
-        } else if (targetView === 'familyTrendView') {
-          this.refreshFamilyTrendChart();
-        }
+        this.switchView(targetView);
       });
     });
 
