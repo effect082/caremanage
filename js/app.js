@@ -804,11 +804,24 @@ class App {
 
     // 1단계: 0ms 즉각 UI 반환
     store.saveLocalRecord(user.elder_code, this.currentDateStr, careData);
-    const confirmNotice = user.role === '가족'
-      ? '🎉 저장이 완료되었습니다! (가족 직접 작성)'
-      : '🎉 저장이 완료되었습니다! (요양보호사 작성)';
-    
-    this.showToast(confirmNotice, 'success');
+    this.showToast('🎉 저장이 완료되었습니다!', 'success');
+
+    // 저장 버튼 즉각 시각적 갱신 ('✅ 저장이 완료되었습니다!' 초록 전환)
+    const saveBtn = document.querySelector('#caregiverForm button[type="submit"]');
+    if (saveBtn) {
+      const origHtml = saveBtn.innerHTML;
+      saveBtn.disabled = true;
+      saveBtn.style.backgroundColor = '#10B981';
+      saveBtn.style.borderColor = '#059669';
+      saveBtn.innerHTML = '✅ 저장이 완료되었습니다!';
+      setTimeout(() => {
+        saveBtn.disabled = false;
+        saveBtn.style.backgroundColor = '';
+        saveBtn.style.borderColor = '';
+        saveBtn.innerHTML = origHtml;
+      }, 2500);
+    }
+
     this.updateStatusBadge(true, user.role, user.name);
     this.loadRecentHistory();
 
