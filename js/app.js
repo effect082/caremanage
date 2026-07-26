@@ -767,32 +767,61 @@ class App {
     this.refreshFamilyTrendChart();
   }
 
-  // 가족 달력 뷰 새로고침
+  // 가족 달력 뷰 새로고침 (SWR 0ms 즉각 반환)
   async refreshFamilyCalendar() {
     const user = store.currentUser;
+    if (!user) return;
     const [year, month] = this.currentYearMonth.split('-').map(Number);
-    const res = await gasApi.getMonthlyCare(user.elder_code, this.currentYearMonth);
-    const records = res.success ? res.data : [];
+    
+    // 1단계: 0ms 즉각 로컬 캐시 달력 렌더링
+    const localMonthly = store.getLocalMonthlyRecords(user.elder_code, this.currentYearMonth);
+    uiComponents.renderCalendar('familyCalendarContainer', year, month, localMonthly, (dateStr, record) => {
+      this.openDetailModalForDate(dateStr);
+    });
 
-    uiComponents.renderCalendar('familyCalendarContainer', year, month, records, (dateStr, record) => {
-      uiComponents.showDetailModal(dateStr, record);
+    // 2단계: 백그라운드 원격 수신 후 동기화
+    gasApi.getMonthlyCare(user.elder_code, this.currentYearMonth).then(res => {
+      if (res && res.success && res.data) {
+        uiComponents.renderCalendar('familyCalendarContainer', year, month, res.data, (dateStr, record) => {
+          this.openDetailModalForDate(dateStr);
+        });
+      }
     });
   }
 
-  // 가족 추이 그래프 새로고침
+  // 가족 추이 그래프 새로고침 (SWR 0ms 즉각 반환)
   async refreshFamilyTrendChart() {
     const user = store.currentUser;
-    const res = await gasApi.getMonthlyCare(user.elder_code, this.currentYearMonth);
-    const records = res.success ? res.data : [];
-    uiComponents.renderTrendChart('familyTrendChartCanvas', records);
+    if (!user) return;
+
+    // 1단계: 0ms 즉각 로컬 캐시 그래프 렌더링
+    const localMonthly = store.getLocalMonthlyRecords(user.elder_code, this.currentYearMonth);
+    uiComponents.renderTrendChart('familyTrendChartCanvas', localMonthly);
+
+    // 2단계: 백그라운드 원격 동기화
+    gasApi.getMonthlyCare(user.elder_code, this.currentYearMonth).then(res => {
+      if (res && res.success && res.data) {
+        uiComponents.renderTrendChart('familyTrendChartCanvas', res.data);
+      }
+    });
   }
 
-  // 특정 일자 모달 호출 헬퍼
+  // 특정 일자 모달 호출 헬퍼 (SWR 0ms 즉각 팝업)
   async openDetailModalForDate(dateStr) {
     const user = store.currentUser;
-    const res = await gasApi.getDailyCare(user.elder_code, dateStr);
-    const record = res.success ? res.data : null;
-    uiComponents.showDetailModal(dateStr, record);
+    if (!user) return;
+
+    // 1단계: 0ms 로컬 데이터로 즉시 모달 열기
+    const localRec = store.getLocalRecord(user.elder_code, dateStr);
+    uiComponents.showDetailModal(dateStr, localRec);
+
+    // 2단계: 백그라운드 최신화
+    gasApi.getDailyCare(user.elder_code, dateStr).then(res => {
+      if (res && res.success && res.data) {
+        store.saveLocalRecord(user.elder_code, dateStr, res.data);
+        uiComponents.showDetailModal(dateStr, res.data);
+      }
+    });
   }
 }
 
