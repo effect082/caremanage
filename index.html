@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>일일 케어 현황 | Daily Care Status</title>
+  
+  <!-- SEO Meta Tags -->
+  <meta name="description" content="요양보호사가 어르신 케어 현황을 매일 작성하고 가족이 실시간으로 언제든 확인할 수 있는 일일 케어 현황 앱">
+  <meta name="theme-color" content="#2F6FED">
+
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="css/font.css">
+  <link rel="stylesheet" href="css/style.css">
+
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+</head>
+<body>
+
+  <!-- Toast Message Notification -->
+  <div id="appToast" class="modal-toast" style="position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 9999; background: rgba(15, 23, 42, 0.88); color: #fff; padding: 12px 24px; border-radius: 30px; font-weight: 600; font-size: 0.95rem; box-shadow: 0 10px 25px rgba(0,0,0,0.2); backdrop-filter: blur(8px); opacity: 0; pointer-events: none; transition: opacity 0.3s ease;"></div>
+
+  <div class="app-container">
+
+    <!-- Top Header Bar -->
+    <header class="glass-header">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <div style="width: 38px; height: 38px; border-radius: 12px; background: var(--primary-blue); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; font-weight: 800;">
+          💙
+        </div>
+        <div>
+          <h1 style="font-size: 1.2rem; margin: 0; color: var(--primary-blue);">일일 케어 현황</h1>
+          <p style="font-size: 0.75rem; color: var(--text-muted); margin: 0;">가족 안심 실시간 케어 매니저</p>
+        </div>
+      </div>
+
+      <div id="userHeaderInfo" style="display: none; align-items: center; gap: 12px;">
+        <div style="text-align: right;">
+          <div id="headerElderName" style="font-size: 0.9rem; font-weight: 700; color: var(--text-dark);">어르신 이름</div>
+          <div id="headerUserName" style="font-size: 0.75rem; color: var(--text-muted);">사용자</div>
+        </div>
+        <button id="logoutBtn" class="btn btn-secondary" style="width: auto; min-height: 36px; padding: 4px 12px; font-size: 0.8rem;">로그아웃</button>
+      </div>
+    </header>
+
+    <!-- SECTION 1: AUTH (로그인 & 회원가입) -->
+    <section id="authSection" class="glass-card" style="max-width: 440px; margin: 20px auto; padding: 32px 24px;">
+      
+      <!-- Tab Selector -->
+      <div style="display: flex; background: var(--primary-blue-light); padding: 4px; border-radius: 14px; margin-bottom: 24px;">
+        <button class="auth-tab-btn active" data-tab="login" style="flex: 1; padding: 10px; border: none; border-radius: 10px; font-family: inherit; font-weight: 700; cursor: pointer; background: #fff; color: var(--primary-blue); transition: all 0.2s;">로그인</button>
+        <button class="auth-tab-btn" data-tab="signup" style="flex: 1; padding: 10px; border: none; border-radius: 10px; font-family: inherit; font-weight: 700; cursor: pointer; background: transparent; color: var(--text-medium); transition: all 0.2s;">회원가입</button>
+      </div>
+
+      <!-- Login Form -->
+      <div id="loginTabForm">
+        <form id="loginForm">
+          <div class="form-group">
+            <label class="form-label">회원 구분 선택</label>
+            <div style="display: flex; gap: 12px;">
+              <label style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 12px; background: rgba(255,255,255,0.8); border: 1px solid var(--border-subtle); border-radius: 12px; cursor: pointer; font-weight: 600;">
+                <input type="radio" name="loginRole" value="요양보호사" checked> 요양보호사 (작성)
+              </label>
+              <label style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 12px; background: rgba(255,255,255,0.8); border: 1px solid var(--border-subtle); border-radius: 12px; cursor: pointer; font-weight: 600;">
+                <input type="radio" name="loginRole" value="가족"> 가족 (열람)
+              </label>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="loginName">이름</label>
+            <input type="text" id="loginName" class="glass-input" placeholder="이름을 입력하세요" required>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">비밀번호 (4자리 PIN)</label>
+            <input type="hidden" id="loginPinHidden">
+            <div class="pin-pad-container">
+              <div id="loginPinDisplay" class="pin-display">
+                <div class="pin-dot"></div>
+                <div class="pin-dot"></div>
+                <div class="pin-dot"></div>
+                <div class="pin-dot"></div>
+              </div>
+              
+              <!-- Keypad Grid -->
+              <div id="loginKeypadGrid" class="keypad-grid">
+                <div class="keypad-btn" data-val="1">1</div>
+                <div class="keypad-btn" data-val="2">2</div>
+                <div class="keypad-btn" data-val="3">3</div>
+                <div class="keypad-btn" data-val="4">4</div>
+                <div class="keypad-btn" data-val="5">5</div>
+                <div class="keypad-btn" data-val="6">6</div>
+                <div class="keypad-btn" data-val="7">7</div>
+                <div class="keypad-btn" data-val="8">8</div>
+                <div class="keypad-btn" data-val="9">9</div>
+                <div class="keypad-btn" data-val="clear" style="font-size: 0.9rem;">C</div>
+                <div class="keypad-btn" data-val="0">0</div>
+                <div class="keypad-btn" data-val="backspace" style="font-size: 0.9rem;">⌫</div>
+              </div>
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-primary" style="margin-top: 16px;">로그인하기</button>
+        </form>
+      </div>
+
+      <!-- Signup Form -->
+      <div id="signupTabForm" style="display: none;">
+        <form id="signupForm">
+          <div class="form-group">
+            <label class="form-label">회원 구분</label>
+            <div style="display: flex; gap: 12px;">
+              <label style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 12px; background: rgba(255,255,255,0.8); border: 1px solid var(--border-subtle); border-radius: 12px; cursor: pointer; font-weight: 600;">
+                <input type="radio" name="signupRole" value="요양보호사" checked> 요양보호사
+              </label>
+              <label style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 12px; background: rgba(255,255,255,0.8); border: 1px solid var(--border-subtle); border-radius: 12px; cursor: pointer; font-weight: 600;">
+                <input type="radio" name="signupRole" value="가족"> 가족
+              </label>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="signupName">이름 (필수)</label>
+            <input type="text" id="signupName" class="glass-input" placeholder="이름을 입력해 주세요" required>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="signupElderName">어르신 성함</label>
+            <input type="text" id="signupElderName" class="glass-input" placeholder="예: 김순자 어르신">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="signupElderCode">어르신 고유 코드</label>
+            <input type="text" id="signupElderCode" class="glass-input" placeholder="예: ELDER001 (기존 코드 또는 신규 입력)">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">비밀번호 설정 (4자리 PIN)</label>
+            <input type="hidden" id="signupPinHidden">
+            <div class="pin-pad-container">
+              <div id="signupPinDisplay" class="pin-display">
+                <div class="pin-dot"></div>
+                <div class="pin-dot"></div>
+                <div class="pin-dot"></div>
+                <div class="pin-dot"></div>
+              </div>
+              
+              <div id="signupKeypadGrid" class="keypad-grid">
+                <div class="keypad-btn" data-val="1">1</div>
+                <div class="keypad-btn" data-val="2">2</div>
+                <div class="keypad-btn" data-val="3">3</div>
+                <div class="keypad-btn" data-val="4">4</div>
+                <div class="keypad-btn" data-val="5">5</div>
+                <div class="keypad-btn" data-val="6">6</div>
+                <div class="keypad-btn" data-val="7">7</div>
+                <div class="keypad-btn" data-val="8">8</div>
+                <div class="keypad-btn" data-val="9">9</div>
+                <div class="keypad-btn" data-val="clear" style="font-size: 0.9rem;">C</div>
+                <div class="keypad-btn" data-val="0">0</div>
+                <div class="keypad-btn" data-val="backspace" style="font-size: 0.9rem;">⌫</div>
+              </div>
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-primary" style="margin-top: 16px;">회원가입 완료</button>
+        </form>
+      </div>
+
+    </section>
+
+    <!-- SECTION 2: 요양보호사 대시보드 (작성 뷰) -->
+    <section id="caregiverSection" style="display: none;">
+      
+      <!-- top status banner -->
+      <div class="glass-card" style="display: flex; justify-content: space-between; align-items: center; padding: 18px 24px;">
+        <div>
+          <span style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600;">작성 일자</span>
+          <h2 id="careDateLabel" style="font-size: 1.3rem; margin-top: 2px;">2026-07-26</h2>
+        </div>
+        <div id="todayStatusBadge">
+          <span class="badge badge-warning">⚠ 오늘 기록 미작성</span>
+        </div>
+      </div>
+
+      <form id="caregiverForm">
+        <div class="grid-2col">
+          
+          <!-- 1. 아침 체크 -->
+          <div class="glass-card">
+            <div class="section-title">
+              <span style="font-weight: 700; font-size: 1.1rem;"><span class="section-icon">🌅</span> 아침 케어 체크</span>
+              <input type="time" id="morningTime" class="glass-input" style="width: auto; padding: 6px 10px; font-size: 0.85rem;" value="08:30">
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">수축기 혈압 (mmHg)</label>
+              <div id="morningSysStepper" class="stepper-container">
+                <button type="button" class="stepper-btn stepper-minus">-</button>
+                <input type="number" id="morningSys" class="stepper-value glass-input" value="120" inputmode="numeric">
+                <button type="button" class="stepper-btn stepper-plus">+</button>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">이완기 혈압 (mmHg)</label>
+              <div id="morningDiaStepper" class="stepper-container">
+                <button type="button" class="stepper-btn stepper-minus">-</button>
+                <input type="number" id="morningDia" class="stepper-value glass-input" value="80" inputmode="numeric">
+                <button type="button" class="stepper-btn stepper-plus">+</button>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">체온 (℃, 소수점 1자리)</label>
+              <div id="morningTempStepper" class="stepper-container">
+                <button type="button" class="stepper-btn stepper-minus">-</button>
+                <input type="number" id="morningTemp" class="stepper-value glass-input" value="36.5" step="0.1" inputmode="decimal">
+                <button type="button" class="stepper-btn stepper-plus">+</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- 2. 저녁 체크 -->
+          <div class="glass-card">
+            <div class="section-title">
+              <span style="font-weight: 700; font-size: 1.1rem;"><span class="section-icon">🌙</span> 저녁 케어 체크</span>
+              <input type="time" id="eveningTime" class="glass-input" style="width: auto; padding: 6px 10px; font-size: 0.85rem;" value="18:00">
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">수축기 혈압 (mmHg)</label>
+              <div id="eveningSysStepper" class="stepper-container">
+                <button type="button" class="stepper-btn stepper-minus">-</button>
+                <input type="number" id="eveningSys" class="stepper-value glass-input" value="120" inputmode="numeric">
+                <button type="button" class="stepper-btn stepper-plus">+</button>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">이완기 혈압 (mmHg)</label>
+              <div id="eveningDiaStepper" class="stepper-container">
+                <button type="button" class="stepper-btn stepper-minus">-</button>
+                <input type="number" id="eveningDia" class="stepper-value glass-input" value="80" inputmode="numeric">
+                <button type="button" class="stepper-btn stepper-plus">+</button>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">체온 (℃, 소수점 1자리)</label>
+              <div id="eveningTempStepper" class="stepper-container">
+                <button type="button" class="stepper-btn stepper-minus">-</button>
+                <input type="number" id="eveningTemp" class="stepper-value glass-input" value="36.5" step="0.1" inputmode="decimal">
+                <button type="button" class="stepper-btn stepper-plus">+</button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- 3. 컨디션 / 식사 / 배변 -->
+        <div class="glass-card">
+          <div class="section-title">
+            <span style="font-weight: 700; font-size: 1.1rem;"><span class="section-icon">😀</span> 오늘의 종합 컨디션 & 식사/배변</span>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">하루 컨디션 (상 / 중 / 하)</label>
+            <div id="conditionChips" class="chip-group">
+              <div class="chip selected" data-val="상">
+                <span class="chip-emoji">😀</span>
+                <span class="chip-label">상 (양호)</span>
+              </div>
+              <div class="chip" data-val="중">
+                <span class="chip-emoji">😐</span>
+                <span class="chip-label">중 (보통)</span>
+              </div>
+              <div class="chip" data-val="하">
+                <span class="chip-emoji">😟</span>
+                <span class="chip-label">하 (저조)</span>
+              </div>
+            </div>
+            <input type="text" id="conditionMemo" class="glass-input" style="margin-top: 10px;" placeholder="컨디션 특이사항 메모 (선택)">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">하루 식사 정도</label>
+            <div id="mealChips" class="chip-group">
+              <div class="chip selected" data-val="잘 드심">
+                <span class="chip-emoji">🍚</span>
+                <span class="chip-label">잘 드심</span>
+              </div>
+              <div class="chip" data-val="보통">
+                <span class="chip-emoji">🍲</span>
+                <span class="chip-label">보통</span>
+              </div>
+              <div class="chip" data-val="잘 못 드심">
+                <span class="chip-emoji">🥣</span>
+                <span class="chip-label">잘 못 드심</span>
+              </div>
+            </div>
+            <input type="text" id="mealMemo" class="glass-input" style="margin-top: 10px;" placeholder="식사 메모 (예: 죽 반 공기 드심)">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">배변 상태 (횟수 & 형태)</label>
+            <div style="display: grid; grid-template-columns: 140px 1fr; gap: 12px; align-items: center;">
+              <div id="stoolCountStepper" class="stepper-container">
+                <button type="button" class="stepper-btn stepper-minus">-</button>
+                <input type="number" id="stoolCount" class="stepper-value glass-input" value="1" inputmode="numeric">
+                <button type="button" class="stepper-btn stepper-plus">+</button>
+              </div>
+
+              <div id="stoolTypeChips" class="chip-group" style="grid-template-columns: repeat(3, 1fr);">
+                <div class="chip" data-val="딱딱함">
+                  <span class="chip-label">딱딱함</span>
+                </div>
+                <div class="chip selected" data-val="부드러움">
+                  <span class="chip-label">부드러움</span>
+                </div>
+                <div class="chip" data-val="물처럼 묽음">
+                  <span class="chip-label">묽음</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-primary" style="margin-top: 20px; font-size: 1.1rem; height: 54px;">
+            💾 오늘 케어 기록 저장하기
+          </button>
+        </div>
+      </form>
+
+      <!-- 최근 7일 작성 이력 카드 -->
+      <div class="glass-card">
+        <div class="section-title">
+          <span style="font-weight: 700; font-size: 1.1rem;"><span class="section-icon">📅</span> 최근 7일간 작성 이력</span>
+        </div>
+        <div id="recentHistoryList">
+          <p class="text-muted" style="text-align: center; padding: 16px;">작성 이력을 불러오는 중...</p>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- SECTION 3: 가족 대시보드 (열람 뷰) -->
+    <section id="familySection" style="display: none;">
+      
+      <!-- Family Top Status -->
+      <div class="glass-card" style="display: flex; justify-content: space-between; align-items: center; padding: 18px 24px;">
+        <div>
+          <span style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600;">오늘 날짜</span>
+          <h2 id="familyDateLabel" style="font-size: 1.3rem; margin-top: 2px;">2026-07-26</h2>
+        </div>
+        <div id="familyStatusBadge">
+          <span class="badge badge-warning">⚠ 오늘 기록 미작성</span>
+        </div>
+      </div>
+
+      <!-- View Pane 1: Today Summary -->
+      <div id="familySummaryView" class="view-pane">
+        <div class="glass-card">
+          <div class="section-title">
+            <span style="font-weight: 700; font-size: 1.1rem;"><span class="section-icon">📋</span> 오늘의 케어 요약</span>
+          </div>
+          <div id="familyTodaySummaryCard">
+            <!-- Rendered dynamically -->
+          </div>
+        </div>
+      </div>
+
+      <!-- View Pane 2: Calendar View -->
+      <div id="familyCalendarView" class="view-pane">
+        <div class="glass-card">
+          <div class="section-title">
+            <span style="font-weight: 700; font-size: 1.1rem;"><span class="section-icon">📆</span> 월간 케어 달력</span>
+            <span class="text-muted" style="font-size: 0.85rem;">날짜 클릭 시 상세 기록 팝업</span>
+          </div>
+          <div id="familyCalendarContainer">
+            <!-- Rendered dynamically -->
+          </div>
+        </div>
+      </div>
+
+      <!-- View Pane 3: Trend Chart View -->
+      <div id="familyTrendView" class="view-pane">
+        <div class="glass-card">
+          <div class="section-title">
+            <span style="font-weight: 700; font-size: 1.1rem;"><span class="section-icon">📈</span> 혈압 & 체온 추이 그래프</span>
+          </div>
+          <div class="chart-wrapper">
+            <canvas id="familyTrendChartCanvas"></canvas>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- Bottom Navigation Bar (Responsive Mobile & Tablet/Desktop) -->
+    <nav id="bottomNav" class="bottom-nav" style="display: none;">
+      <button class="nav-item active" data-target="familySummaryView">
+        <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+        <span>오늘 요약</span>
+      </button>
+      <button class="nav-item" data-target="familyCalendarView">
+        <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+        <span>달력 뷰</span>
+      </button>
+      <button class="nav-item" data-target="familyTrendView">
+        <svg viewBox="0 0 24 24"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
+        <span>추이 그래프</span>
+      </button>
+    </nav>
+
+    <!-- Detail Modal Popup Overlay -->
+    <div id="detailModalOverlay" class="modal-overlay">
+      <div class="glass-modal">
+        <div class="modal-header">
+          <h3 id="modalDateTitle" style="margin: 0; color: var(--primary-blue);">케어 상세 기록</h3>
+          <button id="closeModalBtn" class="modal-close-btn">&times;</button>
+        </div>
+        <div id="modalDetailContent">
+          <!-- Dynamically populated -->
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Scripts -->
+  <script src="js/config.js"></script>
+  <script src="js/store.js"></script>
+  <script src="js/gas-api.js"></script>
+  <script src="js/components.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
