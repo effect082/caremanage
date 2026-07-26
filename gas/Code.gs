@@ -138,8 +138,17 @@ function handleLogin(ss, p) {
   return createJsonResponse({ success: false, message: "이름 또는 비밀번호(4자리)가 일치하지 않습니다." });
 }
 
-// 3. 일일 케어 조회
+// 3. 일일 케어 조회 (속도 최적화 Script Cache 적용)
 function handleGetDailyCare(ss, p) {
+  var cache = CacheService.getScriptCache();
+  var cacheKey = "DAILY_" + p.elder_code + "_" + p.date;
+  var cached = cache.get(cacheKey);
+  if (cached) {
+    try {
+      return createJsonResponse(JSON.parse(cached));
+    } catch(e) {}
+  }
+
   var sheet = ss.getSheetByName('DailyCare');
   var data = sheet.getDataRange().getValues();
   if (data.length <= 1) return createJsonResponse({ success: true, data: null });
@@ -155,11 +164,15 @@ function handleGetDailyCare(ss, p) {
       for (var h = 0; h < headers.length; h++) {
         obj[headers[h]] = headers[h] === 'date' ? formatDate(row[h]) : row[h];
       }
-      return createJsonResponse({ success: true, data: obj });
+      var respObj = { success: true, data: obj };
+      cache.put(cacheKey, JSON.stringify(respObj), 300);
+      return createJsonResponse(respObj);
     }
   }
 
-  return createJsonResponse({ success: true, data: null });
+  var nullResp = { success: true, data: null };
+  cache.put(cacheKey, JSON.stringify(nullResp), 60);
+  return createJsonResponse(nullResp);
 }
 
 // 4. 일일 케어 저장 (요양보호사 & 가족 작성자 구분)
@@ -204,6 +217,15 @@ function handleSaveDailyCare(ss, p) {
     sheet.appendRow(rowData);
   }
 
+  // 캐시 무효화 (저장 후 즉시 동기화 보장)
+  try {
+    var cache = CacheService.getScriptCache();
+    cache.remove("DAILY_" + p.elder_code + "_" + p.date);
+    if (p.date && p.date.length >= 7) {
+      cache.remove("MONTHLY_" + p.elder_code + "_" + p.date.substring(0, 7));
+    }
+  } catch(e) {}
+
   return createJsonResponse({ 
     success: true, 
     message: "일일 케어 현황 기록 저장이 성공적으로 완료되었습니다.", 
@@ -213,8 +235,17 @@ function handleSaveDailyCare(ss, p) {
   });
 }
 
-// 5. 월간 기록 조회
+// 5. 월간 기록 조회 (속도 최적화 Script Cache 적용)
 function handleGetMonthlyCare(ss, p) {
+  var cache = CacheService.getScriptCache();
+  var cacheKey = "MONTHLY_" + p.elder_code + "_" + p.month;
+  var cached = cache.get(cacheKey);
+  if (cached) {
+    try {
+      return createJsonResponse(JSON.parse(cached));
+    } catch(e) {}
+  }
+
   var sheet = ss.getSheetByName('DailyCare');
   var data = sheet.getDataRange().getValues();
   var results = [];
@@ -236,7 +267,9 @@ function handleGetMonthlyCare(ss, p) {
     }
   }
 
-  return createJsonResponse({ success: true, data: results });
+  var respObj = { success: true, data: results };
+  cache.put(cacheKey, JSON.stringify(respObj), 300);
+  return createJsonResponse(respObj);
 }
 
 // Helper: JSON 응답 생성 (CORS 유연화)

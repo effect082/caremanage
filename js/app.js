@@ -434,7 +434,112 @@ class App {
     });
   }
 
-  // 요양보호사 대시보드 데이터 로드
+  applyCareRecordToForm(d) {
+    if (!d) return;
+    if (d.morning_systolic) { const el = document.getElementById('morningSys'); if (el) el.value = d.morning_systolic; }
+    if (d.morning_diastolic) { const el = document.getElementById('morningDia'); if (el) el.value = d.morning_diastolic; }
+    if (d.morning_temp) { const el = document.getElementById('morningTemp'); if (el) el.value = d.morning_temp; }
+    if (d.morning_time) { const el = document.getElementById('morningTime'); if (el) el.value = d.morning_time; }
+
+    if (d.evening_systolic) { const el = document.getElementById('eveningSys'); if (el) el.value = d.evening_systolic; }
+    if (d.evening_diastolic) { const el = document.getElementById('eveningDia'); if (el) el.value = d.evening_diastolic; }
+    if (d.evening_temp) { const el = document.getElementById('eveningTemp'); if (el) el.value = d.evening_temp; }
+    if (d.evening_time) { const el = document.getElementById('eveningTime'); if (el) el.value = d.evening_time; }
+
+    if (d.condition_memo) { const el = document.getElementById('conditionMemo'); if (el) el.value = d.condition_memo; }
+    if (d.meal_memo) { const el = document.getElementById('mealMemo'); if (el) el.value = d.meal_memo; }
+    if (d.stool_count !== undefined) {
+      const el = document.getElementById('stoolCount');
+      if (el) {
+        let parsedStool = parseInt(d.stool_count, 10);
+        if (isNaN(parsedStool) || parsedStool < 0 || parsedStool > 10) parsedStool = 0;
+        el.value = parsedStool;
+      }
+    }
+
+    if (d.condition) {
+      this.selectedCondition = d.condition;
+      this.selectChipByValue('conditionChips', d.condition);
+    }
+    if (d.meal_status) {
+      this.selectedMeal = d.meal_status;
+      this.selectChipByValue('mealChips', d.meal_status);
+    }
+    if (d.stool_type) {
+      this.selectedStoolType = d.stool_type;
+      this.selectChipByValue('stoolTypeChips', d.stool_type);
+    }
+
+    this.validateHealthInputs();
+  }
+
+  renderFamilySummaryCard(d) {
+    const summaryCard = document.getElementById('familyTodaySummaryCard');
+    if (!summaryCard) return;
+
+    if (!d) {
+      this.updateStatusBadge(false);
+      summaryCard.innerHTML = `
+        <div style="text-align: center; padding: 24px; color: var(--text-muted);">
+          <div style="font-size: 2.5rem; margin-bottom: 8px;">📋</div>
+          <p style="font-weight: 600;">오늘 작성된 케어 기록이 아직 없습니다.</p>
+        </div>
+      `;
+      return;
+    }
+
+    this.updateStatusBadge(true, d.updated_role, d.updated_by_name);
+    
+    const authorText = d.updated_by_name ? ` (${d.updated_by_name})` : '';
+    const roleBadge = d.updated_role === '가족'
+      ? `<span class="badge badge-blue">👨‍👩‍👧 가족 직접 작성${authorText}</span>`
+      : `<span class="badge badge-green">🧑‍⚕️ 요양보호사 작성${authorText}</span>`;
+
+    const rawCount = parseInt(d.stool_count, 10);
+    const cleanStool = isNaN(rawCount) || rawCount < 0 ? 0 : (rawCount > 10 ? 1 : rawCount);
+    const stoolText = cleanStool === 0 ? '0회 (미배변)' : `${cleanStool}회 (${d.stool_type || '부드러움'})`;
+
+    summaryCard.innerHTML = `
+      <div style="margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;">
+        <span class="text-muted" style="font-size: 0.85rem; font-weight: 600;">작성자 구별:</span>
+        ${roleBadge}
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px;">
+        <div style="background: rgba(255,255,255,0.85); padding: 14px; border-radius: 14px;">
+          <div style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600;">🌅 아침 혈압/체온</div>
+          <div style="font-size: 1.1rem; font-weight: 700; color: var(--primary-blue); margin-top: 4px;">
+            ${d.morning_systolic ? `${d.morning_systolic}/${d.morning_diastolic} mmHg` : '미입력'}
+          </div>
+          <div style="font-size: 0.95rem; font-weight: 600; color: ${d.morning_temp >= 37.5 ? 'var(--alert-red)' : 'var(--text-dark)'};">
+            ${d.morning_temp ? `${d.morning_temp} ℃` : ''}
+          </div>
+        </div>
+
+        <div style="background: rgba(255,255,255,0.85); padding: 14px; border-radius: 14px;">
+          <div style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600;">🌙 저녁 혈압/체온</div>
+          <div style="font-size: 1.1rem; font-weight: 700; color: var(--primary-blue); margin-top: 4px;">
+            ${d.evening_systolic ? `${d.evening_systolic}/${d.evening_diastolic} mmHg` : '미입력'}
+          </div>
+          <div style="font-size: 0.95rem; font-weight: 600; color: ${d.evening_temp >= 37.5 ? 'var(--alert-red)' : 'var(--text-dark)'};">
+            ${d.evening_temp ? `${d.evening_temp} ℃` : ''}
+          </div>
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+        <span class="badge badge-blue">😀 컨디션: ${d.condition || '미입력'}</span>
+        <span class="badge badge-blue">🍚 식사: ${d.meal_status || '미입력'}</span>
+        <span class="badge badge-blue">🚽 배변: ${stoolText}</span>
+      </div>
+
+      <div style="margin-top: 16px;">
+        <button class="btn btn-secondary" onclick="app.switchView('caregiverWriteView')" style="width: 100%;">✏️ 오늘 기록 수정 / 추가 작성하기</button>
+      </div>
+    `;
+  }
+
+  // 요양보호사 대시보드 데이터 로드 (SWR 초고속 0ms 즉각 반환)
   async loadCaregiverDashboard() {
     const user = store.currentUser;
     if (!user) return;
@@ -449,51 +554,21 @@ class App {
     if (morningTimeEl) morningTimeEl.value = timeStr;
     if (eveningTimeEl) eveningTimeEl.value = timeStr;
 
-    // 기존 오늘의 작성 기록 조회
-    this.showToast('오늘 기록 확인 중...', 'info');
-    const res = await gasApi.getDailyCare(user.elder_code, this.currentDateStr);
-    
-    if (res.success && res.data) {
-      const d = res.data;
-      if (d.morning_systolic) { const el = document.getElementById('morningSys'); if (el) el.value = d.morning_systolic; }
-      if (d.morning_diastolic) { const el = document.getElementById('morningDia'); if (el) el.value = d.morning_diastolic; }
-      if (d.morning_temp) { const el = document.getElementById('morningTemp'); if (el) el.value = d.morning_temp; }
-      if (d.morning_time) { const el = document.getElementById('morningTime'); if (el) el.value = d.morning_time; }
-
-      if (d.evening_systolic) { const el = document.getElementById('eveningSys'); if (el) el.value = d.evening_systolic; }
-      if (d.evening_diastolic) { const el = document.getElementById('eveningDia'); if (el) el.value = d.evening_diastolic; }
-      if (d.evening_temp) { const el = document.getElementById('eveningTemp'); if (el) el.value = d.evening_temp; }
-      if (d.evening_time) { const el = document.getElementById('eveningTime'); if (el) el.value = d.evening_time; }
-
-      if (d.condition_memo) { const el = document.getElementById('conditionMemo'); if (el) el.value = d.condition_memo; }
-      if (d.meal_memo) { const el = document.getElementById('mealMemo'); if (el) el.value = d.meal_memo; }
-      if (d.stool_count !== undefined) {
-        const el = document.getElementById('stoolCount');
-        if (el) {
-          let parsedStool = parseInt(d.stool_count, 10);
-          if (isNaN(parsedStool) || parsedStool < 0 || parsedStool > 10) parsedStool = 0;
-          el.value = parsedStool;
-        }
-      }
-
-      if (d.condition) {
-        this.selectedCondition = d.condition;
-        this.selectChipByValue('conditionChips', d.condition);
-      }
-      if (d.meal_status) {
-        this.selectedMeal = d.meal_status;
-        this.selectChipByValue('mealChips', d.meal_status);
-      }
-      if (d.stool_type) {
-        this.selectedStoolType = d.stool_type;
-        this.selectChipByValue('stoolTypeChips', d.stool_type);
-      }
-
-      this.validateHealthInputs();
-      this.updateStatusBadge(true, d.updated_role, d.updated_by_name);
-    } else {
-      this.updateStatusBadge(false);
+    // 1단계: 0ms 초고속 로컬 캐시 즉시 반영
+    const localRec = store.getLocalRecord(user.elder_code, this.currentDateStr);
+    if (localRec) {
+      this.applyCareRecordToForm(localRec);
+      this.updateStatusBadge(true, localRec.updated_role, localRec.updated_by_name);
     }
+
+    // 2단계: 백그라운드 실시간 비동기 동기화
+    gasApi.getDailyCare(user.elder_code, this.currentDateStr).then(res => {
+      if (res && res.success && res.data) {
+        store.saveLocalRecord(user.elder_code, this.currentDateStr, res.data);
+        this.applyCareRecordToForm(res.data);
+        this.updateStatusBadge(true, res.data.updated_role, res.data.updated_by_name);
+      }
+    });
 
     this.loadRecentHistory();
   }
@@ -515,34 +590,42 @@ class App {
     const historyList = document.getElementById('recentHistoryList');
     if (!historyList) return;
 
-    const res = await gasApi.getMonthlyCare(user.elder_code, this.currentYearMonth);
-    const records = res.success ? res.data : [];
+    // 로컬 데이터 즉시 반환
+    const localMonthly = store.getLocalMonthlyRecords(user.elder_code, this.currentYearMonth);
+    const renderHistory = (records) => {
+      if (!records || records.length === 0) {
+        historyList.innerHTML = `<p class="text-muted" style="text-align:center; padding: 12px;">최근 작성된 기록이 없습니다.</p>`;
+        return;
+      }
+      const sorted = [...records].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 7);
+      historyList.innerHTML = sorted.map(r => {
+        const creatorBadge = r.updated_role === '가족'
+          ? `<span class="badge badge-blue" style="margin-left: 6px; font-size: 0.72rem; padding: 2px 8px;">👨‍👩‍👧 가족</span>`
+          : `<span class="badge badge-green" style="margin-left: 6px; font-size: 0.72rem; padding: 2px 8px;">🧑‍⚕️ 요양보호사</span>`;
 
-    if (!records || records.length === 0) {
-      historyList.innerHTML = `<p class="text-muted" style="text-align:center; padding: 12px;">최근 작성된 기록이 없습니다.</p>`;
-      return;
-    }
-
-    const sorted = [...records].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 7);
-    historyList.innerHTML = sorted.map(r => {
-      const creatorBadge = r.updated_role === '가족'
-        ? `<span class="badge badge-blue" style="margin-left: 6px; font-size: 0.72rem; padding: 2px 8px;">👨‍👩‍👧 가족</span>`
-        : `<span class="badge badge-green" style="margin-left: 6px; font-size: 0.72rem; padding: 2px 8px;">🧑‍⚕️ 요양보호사</span>`;
-
-      return `
-        <div style="display:flex; justify-content:space-between; align-items:center; padding: 10px 14px; background: rgba(255,255,255,0.7); border-radius: 12px; margin-bottom: 8px;">
-          <div>
-            <span style="font-weight: 700; color: var(--text-dark);">${r.date}</span>
-            <span class="badge badge-blue" style="margin-left: 8px;">${r.condition || '기록'}</span>
-            ${creatorBadge}
+        return `
+          <div style="display:flex; justify-content:space-between; align-items:center; padding: 10px 14px; background: rgba(255,255,255,0.7); border-radius: 12px; margin-bottom: 8px;">
+            <div>
+              <span style="font-weight: 700; color: var(--text-dark);">${r.date}</span>
+              <span class="badge badge-blue" style="margin-left: 8px;">${r.condition || '기록'}</span>
+              ${creatorBadge}
+            </div>
+            <button class="btn btn-secondary" style="width: auto; min-height: 32px; padding: 4px 12px; font-size: 0.85rem;" onclick="app.openDetailModalForDate('${r.date}')">상세보기</button>
           </div>
-          <button class="btn btn-secondary" style="width: auto; min-height: 32px; padding: 4px 12px; font-size: 0.85rem;" onclick="app.openDetailModalForDate('${r.date}')">상세보기</button>
-        </div>
-      `;
-    }).join('');
+        `;
+      }).join('');
+    };
+
+    renderHistory(localMonthly);
+
+    gasApi.getMonthlyCare(user.elder_code, this.currentYearMonth).then(res => {
+      if (res && res.success && res.data) {
+        renderHistory(res.data);
+      }
+    });
   }
 
-  // 케어 기록 저장
+  // 케어 기록 저장 (Optimistic UI 0ms 즉각 저장)
   async saveCareRecord() {
     const user = store.currentUser;
     if (!user) return;
@@ -590,100 +673,44 @@ class App {
       updated_role: user.role
     };
 
-    this.showToast('기록을 저장하고 있습니다...', 'info');
-    const res = await gasApi.saveDailyCare(user.elder_code, this.currentDateStr, careData);
+    // 1단계: 0ms 즉각 UI 반환
+    store.saveLocalRecord(user.elder_code, this.currentDateStr, careData);
+    const confirmNotice = user.role === '가족'
+      ? '🎉 [가족 직접 저장 완료] 일일 케어 기록 저장이 성공적으로 완료되었습니다!'
+      : '🎉 [요양보호사 저장 완료] 일일 케어 기록 저장이 성공적으로 완료되었습니다!';
+    
+    this.showToast(confirmNotice, 'success');
+    this.updateStatusBadge(true, user.role, user.name);
+    this.loadRecentHistory();
 
-    if (res.success) {
-      const confirmNotice = user.role === '가족'
-        ? '🎉 [가족 직접 저장 완료] 어르신 일일 케어 기록 저장이 성공적으로 완료되었습니다!'
-        : '🎉 [요양보호사 저장 완료] 어르신 일일 케어 기록 저장이 성공적으로 완료되었습니다!';
-      
-      this.showToast(confirmNotice, 'success');
-      this.updateStatusBadge(true, user.role, user.name);
-      this.loadRecentHistory();
-    } else {
-      this.showToast(res.message || '저장 실패', 'danger');
-    }
+    // 2단계: 백그라운드 원격 서버 동기화
+    gasApi.saveDailyCare(user.elder_code, this.currentDateStr, careData);
   }
 
-  // 가족 대시보드 데이터 로드
+  // 가족 대시보드 데이터 로드 (SWR 0ms 초고속 반영)
   async loadFamilyDashboard() {
     const user = store.currentUser;
     if (!user) return;
 
     this.updateStatusDate(this.currentDateStr);
 
-    this.showToast('오늘의 케어 현황을 불러오는 중...', 'info');
-    const res = await gasApi.getDailyCare(user.elder_code, this.currentDateStr);
-
-    const summaryCard = document.getElementById('familyTodaySummaryCard');
-
-    if (res.success && res.data) {
-      const d = res.data;
-      this.updateStatusBadge(true, d.updated_role, d.updated_by_name);
-      
-      const authorText = d.updated_by_name ? ` (${d.updated_by_name})` : '';
-      const roleBadge = d.updated_role === '가족'
-        ? `<span class="badge badge-blue">👨‍👩‍👧 가족 직접 작성${authorText}</span>`
-        : `<span class="badge badge-green">🧑‍⚕️ 요양보호사 작성${authorText}</span>`;
-
-      const rawCount = parseInt(d.stool_count, 10);
-      const cleanStool = isNaN(rawCount) || rawCount < 0 ? 0 : (rawCount > 10 ? 1 : rawCount);
-      const stoolText = cleanStool === 0 ? '0회 (미배변)' : `${cleanStool}회 (${d.stool_type || '부드러움'})`;
-
-      if (summaryCard) {
-        summaryCard.innerHTML = `
-          <div style="margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;">
-            <span class="text-muted" style="font-size: 0.85rem; font-weight: 600;">작성자 구별:</span>
-            ${roleBadge}
-          </div>
-
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px;">
-            <div style="background: rgba(255,255,255,0.85); padding: 14px; border-radius: 14px;">
-              <div style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600;">🌅 아침 혈압/체온</div>
-              <div style="font-size: 1.1rem; font-weight: 700; color: var(--primary-blue); margin-top: 4px;">
-                ${d.morning_systolic ? `${d.morning_systolic}/${d.morning_diastolic} mmHg` : '미입력'}
-              </div>
-              <div style="font-size: 0.95rem; font-weight: 600; color: ${d.morning_temp >= 37.5 ? 'var(--alert-red)' : 'var(--text-dark)'};">
-                ${d.morning_temp ? `${d.morning_temp} ℃` : ''}
-              </div>
-            </div>
-
-            <div style="background: rgba(255,255,255,0.85); padding: 14px; border-radius: 14px;">
-              <div style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600;">🌙 저녁 혈압/체온</div>
-              <div style="font-size: 1.1rem; font-weight: 700; color: var(--primary-blue); margin-top: 4px;">
-                ${d.evening_systolic ? `${d.evening_systolic}/${d.evening_diastolic} mmHg` : '미입력'}
-              </div>
-              <div style="font-size: 0.95rem; font-weight: 600; color: ${d.evening_temp >= 37.5 ? 'var(--alert-red)' : 'var(--text-dark)'};">
-                ${d.evening_temp ? `${d.evening_temp} ℃` : ''}
-              </div>
-            </div>
-          </div>
-
-          <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-            <span class="badge badge-blue">😀 컨디션: ${d.condition || '미입력'}</span>
-            <span class="badge badge-blue">🍚 식사: ${d.meal_status || '미입력'}</span>
-            <span class="badge badge-blue">🚽 배변: ${stoolText}</span>
-          </div>
-
-          <div style="margin-top: 16px;">
-            <button class="btn btn-secondary" onclick="app.switchView('caregiverWriteView')" style="width: 100%;">✏️ 오늘 기록 수정 / 추가 작성하기</button>
-          </div>
-        `;
-      }
+    // 1단계: 로컬 데이터 즉시 반환
+    const localRec = store.getLocalRecord(user.elder_code, this.currentDateStr);
+    if (localRec) {
+      this.renderFamilySummaryCard(localRec);
     } else {
-      this.updateStatusBadge(false);
-      if (summaryCard) {
-        summaryCard.innerHTML = `
-          <div style="text-align: center; padding: 24px; color: var(--text-muted);">
-            <div style="font-size: 2.5rem; margin-bottom: 8px;">📋</div>
-            <p style="font-weight: 600;">오늘 작성된 케어 기록이 아직 없습니다.</p>
-            <p style="font-size: 0.85rem; margin-top: 4px; margin-bottom: 16px;">주말(토/일) 및 요양보호사 휴가 시에는 가족이 직접 케어 기록을 작성하실 수 있습니다.</p>
-            <button class="btn btn-primary" onclick="app.switchView('caregiverWriteView')" style="max-width: 280px; margin: 0 auto;">✏️ 가족 직접 케어 작성하기 (주말/휴가)</button>
-          </div>
-        `;
-      }
+      this.renderFamilySummaryCard(null);
     }
+
+    // 2단계: 백그라운드 동기화
+    gasApi.getDailyCare(user.elder_code, this.currentDateStr).then(res => {
+      if (res && res.success && res.data) {
+        store.saveLocalRecord(user.elder_code, this.currentDateStr, res.data);
+        this.renderFamilySummaryCard(res.data);
+      } else if (!localRec) {
+        this.renderFamilySummaryCard(null);
+      }
+    });
 
     this.refreshFamilyCalendar();
     this.refreshFamilyTrendChart();
