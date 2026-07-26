@@ -208,16 +208,36 @@ class App {
     document.getElementById('signupForm').addEventListener('submit', async (e) => {
       e.preventDefault();
       const name = document.getElementById('signupName').value.trim();
+      const elderName = document.getElementById('signupElderName').value.trim();
       const role = document.querySelector('input[name="signupRole"]:checked').value;
       const pin = document.getElementById('signupPinHidden').value;
       const elderCode = '';
-      const elderName = '';
       const signupErrBox = document.getElementById('signupErrorMessage');
 
       if (signupErrBox) signupErrBox.style.display = 'none';
 
-      if (!name || !pin || pin.length < 4) {
-        const msg = '이름과 4자리 PIN 비밀번호를 완성해 주세요.';
+      if (!name) {
+        const msg = '이름을 입력해 주세요.';
+        if (signupErrBox) {
+          signupErrBox.textContent = `⚠ ${msg}`;
+          signupErrBox.style.display = 'block';
+        }
+        this.showToast(msg, 'warning');
+        return;
+      }
+
+      if (!elderName) {
+        const msg = '어르신 성함을 입력해 주세요.';
+        if (signupErrBox) {
+          signupErrBox.textContent = `⚠ ${msg}`;
+          signupErrBox.style.display = 'block';
+        }
+        this.showToast(msg, 'warning');
+        return;
+      }
+
+      if (!pin || pin.length < 4) {
+        const msg = '4자리 비밀번호(PIN)를 모두 입력해 주세요.';
         if (signupErrBox) {
           signupErrBox.textContent = `⚠ ${msg}`;
           signupErrBox.style.display = 'block';
