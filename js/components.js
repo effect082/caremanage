@@ -243,9 +243,10 @@ class UIComponents {
         : `<span class="badge badge-green">🧑‍⚕️ 요양보호사 작성${authorText}</span>`;
 
       const getMedBadge = (r) => {
-        const m = (r.medication_morning === true || r.medication_morning === 'Y' || r.medication_morning === 'true');
-        const l = (r.medication_lunch === true || r.medication_lunch === 'Y' || r.medication_lunch === 'true');
-        const e = (r.medication_evening === true || r.medication_evening === 'Y' || r.medication_evening === 'true');
+        const isTaken = (val) => val === true || val === 'true' || val === 'Y' || val === '복용' || val === 1 || val === '1';
+        const m = isTaken(r.medication_morning);
+        const l = isTaken(r.medication_lunch);
+        const e = isTaken(r.medication_evening);
 
         return `아침 ${m ? '✔' : '❌'} | 점심 ${l ? '✔' : '❌'} | 저녁 ${e ? '✔' : '❌'}`;
       };

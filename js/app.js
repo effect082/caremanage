@@ -553,11 +553,15 @@ class App {
     this.validateHealthInputs();
   }
 
+  isTaken(val) {
+    return val === true || val === 'true' || val === 'Y' || val === '복용' || val === 1 || val === '1';
+  }
+
   formatMedicationStatus(d) {
     if (!d) return '미복용';
-    const m = (d.medication_morning === true || d.medication_morning === 'Y' || d.medication_morning === 'true');
-    const l = (d.medication_lunch === true || d.medication_lunch === 'Y' || d.medication_lunch === 'true');
-    const e = (d.medication_evening === true || d.medication_evening === 'Y' || d.medication_evening === 'true');
+    const m = this.isTaken(d.medication_morning);
+    const l = this.isTaken(d.medication_lunch);
+    const e = this.isTaken(d.medication_evening);
 
     const list = [];
     if (m) list.push('아침');
@@ -565,8 +569,8 @@ class App {
     if (e) list.push('저녁');
 
     if (list.length === 0) return '미복용';
-    if (list.length === 3) return '아침·점심·저녁 완료';
-    return `${list.join('·')} 복용`;
+    if (list.length === 3) return '아침·점심·저녁 모두 완료';
+    return `${list.join('·')} 복용 완료`;
   }
 
   renderFamilySummaryCard(d) {

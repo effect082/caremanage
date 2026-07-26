@@ -328,7 +328,7 @@ function formatDate(d) {
   }
 }
 
-// Helper: 필수 시트 자동 생성
+// Helper: 필수 시트 및 25개 헤더 자동 생성/동기화
 function ensureSheetsExist(ss) {
   var sheets = ['Users', 'Elders', 'DailyCare'];
   var defaultHeaders = {
@@ -339,7 +339,9 @@ function ensureSheetsExist(ss) {
       'morning_systolic', 'morning_diastolic', 'morning_temp', 'morning_time',
       'evening_systolic', 'evening_diastolic', 'evening_temp', 'evening_time',
       'condition', 'condition_memo', 'meal_status', 'meal_memo',
-      'stool_count', 'stool_type', 'updated_by', 'updated_at'
+      'stool_count', 'stool_type',
+      'medication_morning', 'medication_lunch', 'medication_evening', 'medication_memo',
+      'updated_by', 'updated_by_name', 'updated_role', 'updated_at'
     ]
   };
 
@@ -348,6 +350,19 @@ function ensureSheetsExist(ss) {
     if (!sheet) {
       sheet = ss.insertSheet(sName);
       sheet.appendRow(defaultHeaders[sName]);
+    } else if (sName === 'DailyCare') {
+      var lastCol = sheet.getLastColumn();
+      var firstRow = sheet.getRange(1, 1, 1, Math.max(lastCol, defaultHeaders['DailyCare'].length)).getValues()[0];
+      var hasMedCol = false;
+      for (var k = 0; k < firstRow.length; k++) {
+        if (firstRow[k] === 'medication_morning') {
+          hasMedCol = true;
+          break;
+        }
+      }
+      if (!hasMedCol) {
+        sheet.getRange(1, 1, 1, defaultHeaders['DailyCare'].length).setValues([defaultHeaders['DailyCare']]);
+      }
     }
   });
 }
