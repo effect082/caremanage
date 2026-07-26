@@ -66,7 +66,7 @@ class App {
       navCaregiverWriteBtn.style.display = 'flex';
       const labelSpan = navCaregiverWriteBtn.querySelector('span');
       if (labelSpan) {
-        labelSpan.textContent = user.role === '가족' ? '케어 작성 (주말/휴가)' : '케어 작성';
+        labelSpan.textContent = '케어 작성';
       }
     }
 

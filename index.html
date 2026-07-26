@@ -25,22 +25,22 @@
 
     <!-- Top Header Bar -->
     <header class="glass-header">
-      <div style="display: flex; align-items: center; gap: 10px;">
-        <div style="width: 38px; height: 38px; border-radius: 12px; background: var(--primary-blue); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; font-weight: 800;">
+      <div style="display: flex; align-items: center; gap: 8px; min-width: 0;">
+        <div style="width: 36px; height: 36px; border-radius: 10px; background: var(--primary-blue); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; font-weight: 800; flex-shrink: 0;">
           💙
         </div>
-        <div>
-          <h1 style="font-size: 1.2rem; margin: 0; color: var(--primary-blue);">일일 케어 현황</h1>
-          <p style="font-size: 0.75rem; color: var(--text-muted); margin: 0;">가족 안심 실시간 케어 매니저</p>
+        <div style="min-width: 0;">
+          <h1 style="font-size: 1.1rem; margin: 0; color: var(--primary-blue); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">일일 케어 현황</h1>
+          <p class="header-subtitle" style="font-size: 0.72rem; color: var(--text-muted); margin: 0; white-space: nowrap;">가족 안심 실시간 케어 매니저</p>
         </div>
       </div>
 
-      <div id="userHeaderInfo" style="display: none; align-items: center; gap: 12px;">
-        <div style="text-align: right;">
-          <div id="headerElderName" style="font-size: 0.9rem; font-weight: 700; color: var(--text-dark);">어르신 이름</div>
-          <div id="headerUserName" style="font-size: 0.75rem; color: var(--text-muted);">사용자</div>
+      <div id="userHeaderInfo" style="display: none; align-items: center; gap: 8px; flex-shrink: 0;">
+        <div style="text-align: right; line-height: 1.25; white-space: nowrap;">
+          <div id="headerElderName" style="font-size: 0.85rem; font-weight: 700; color: var(--text-dark); white-space: nowrap;">어르신 이름</div>
+          <div id="headerUserName" style="font-size: 0.72rem; color: var(--text-muted); white-space: nowrap;">사용자</div>
         </div>
-        <button id="logoutBtn" class="btn btn-secondary" style="width: auto; min-height: 36px; padding: 4px 12px; font-size: 0.8rem;">로그아웃</button>
+        <button id="logoutBtn" class="btn btn-secondary" style="width: auto; min-height: 32px; padding: 4px 10px; font-size: 0.78rem; white-space: nowrap; flex-shrink: 0; border-radius: 10px;">로그아웃</button>
       </div>
     </header>
 
@@ -78,12 +78,12 @@
         <form id="loginForm">
           <div class="form-group">
             <label class="form-label">회원 구분 선택</label>
-            <div style="display: flex; gap: 12px;">
-              <label style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 12px; background: rgba(255,255,255,0.8); border: 1px solid var(--border-subtle); border-radius: 12px; cursor: pointer; font-weight: 600;">
-                <input type="radio" name="loginRole" value="요양보호사" checked> 요양보호사 (작성)
+            <div style="display: flex; gap: 10px;">
+              <label style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 10px 4px; background: rgba(255,255,255,0.8); border: 1px solid var(--border-subtle); border-radius: 12px; cursor: pointer; font-weight: 600; font-size: 0.9rem; white-space: nowrap;">
+                <input type="radio" name="loginRole" value="요양보호사" checked> 요양보호사
               </label>
-              <label style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 12px; background: rgba(255,255,255,0.8); border: 1px solid var(--border-subtle); border-radius: 12px; cursor: pointer; font-weight: 600;">
-                <input type="radio" name="loginRole" value="가족"> 가족 (열람)
+              <label style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 10px 4px; background: rgba(255,255,255,0.8); border: 1px solid var(--border-subtle); border-radius: 12px; cursor: pointer; font-weight: 600; font-size: 0.9rem; white-space: nowrap;">
+                <input type="radio" name="loginRole" value="가족"> 가족
               </label>
             </div>
           </div>
@@ -133,11 +133,11 @@
         <form id="signupForm">
           <div class="form-group">
             <label class="form-label">회원 구분</label>
-            <div style="display: flex; gap: 12px;">
-              <label style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 12px; background: rgba(255,255,255,0.8); border: 1px solid var(--border-subtle); border-radius: 12px; cursor: pointer; font-weight: 600;">
+            <div style="display: flex; gap: 10px;">
+              <label style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 10px 4px; background: rgba(255,255,255,0.8); border: 1px solid var(--border-subtle); border-radius: 12px; cursor: pointer; font-weight: 600; font-size: 0.9rem; white-space: nowrap;">
                 <input type="radio" name="signupRole" value="요양보호사" checked> 요양보호사
               </label>
-              <label style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 12px; background: rgba(255,255,255,0.8); border: 1px solid var(--border-subtle); border-radius: 12px; cursor: pointer; font-weight: 600;">
+              <label style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 10px 4px; background: rgba(255,255,255,0.8); border: 1px solid var(--border-subtle); border-radius: 12px; cursor: pointer; font-weight: 600; font-size: 0.9rem; white-space: nowrap;">
                 <input type="radio" name="signupRole" value="가족"> 가족
               </label>
             </div>
