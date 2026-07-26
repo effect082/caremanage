@@ -141,8 +141,8 @@ class App {
       const name = document.getElementById('signupName').value.trim();
       const role = document.querySelector('input[name="signupRole"]:checked').value;
       const pin = document.getElementById('signupPinHidden').value;
-      const elderCode = document.getElementById('signupElderCode').value.trim();
-      const elderName = document.getElementById('signupElderName').value.trim();
+      const elderCode = '';
+      const elderName = '';
 
       if (!name || !pin || pin.length < 4) {
         this.showToast('이름과 4자리 PIN 비밀번호를 완성해 주세요.', 'warning');
