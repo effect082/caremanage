@@ -617,20 +617,40 @@ h3 { font-size: 1.1rem; }
   margin-top: 10px;
 }
 
-/* Desktop Grid Layout for Dashboard */
+/* Desktop Grid Layout & Header Navigation */
 @media (min-width: 768px) {
   .app-container {
     padding-bottom: 40px;
   }
   
   .bottom-nav {
-    top: 20px;
+    position: relative;
+    top: auto;
     bottom: auto;
     left: auto;
-    right: 20px;
+    right: auto;
     transform: none;
-    width: auto;
+    width: 100%;
+    max-width: 100%;
+    margin: -8px 0 24px 0;
+    justify-content: center;
+    gap: 16px;
+    padding: 8px 20px;
     border-radius: 20px;
+    height: auto;
+  }
+
+  .nav-item {
+    flex-direction: row;
+    padding: 10px 24px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    border-radius: 14px;
+  }
+
+  .nav-item svg {
+    width: 20px;
+    height: 20px;
   }
 
   .grid-2col {
