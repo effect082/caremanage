@@ -162,7 +162,7 @@ function handleGetDailyCare(ss, p) {
   return createJsonResponse({ success: true, data: null });
 }
 
-// 4. 일일 케어 저장 (요양보호사 & 가족 주말/휴가 작성)
+// 4. 일일 케어 저장 (요양보호사 & 가족 작성자 구분)
 function handleSaveDailyCare(ss, p) {
   var sheet = ss.getSheetByName('DailyCare');
   var data = sheet.getDataRange().getValues();
@@ -171,7 +171,7 @@ function handleSaveDailyCare(ss, p) {
     'morning_systolic', 'morning_diastolic', 'morning_temp', 'morning_time',
     'evening_systolic', 'evening_diastolic', 'evening_temp', 'evening_time',
     'condition', 'condition_memo', 'meal_status', 'meal_memo',
-    'stool_count', 'stool_type', 'updated_by', 'updated_role', 'updated_at'
+    'stool_count', 'stool_type', 'updated_by', 'updated_by_name', 'updated_role', 'updated_at'
   ];
 
   var rowIdx = -1;
@@ -185,6 +185,7 @@ function handleSaveDailyCare(ss, p) {
   var recordId = rowIdx > 0 ? data[rowIdx - 1][0] : 'REC_' + new Date().getTime();
   var updatedAt = new Date().toISOString();
   var updatedRole = p.updated_role || '요양보호사';
+  var updatedByName = p.updated_by_name || p.updated_by || '사용자';
 
   var parsedStool = parseInt(p.stool_count, 10);
   var cleanStool = isNaN(parsedStool) || parsedStool < 0 ? 0 : Math.min(10, parsedStool);
@@ -194,7 +195,7 @@ function handleSaveDailyCare(ss, p) {
     p.morning_systolic || '', p.morning_diastolic || '', p.morning_temp || '', p.morning_time || '',
     p.evening_systolic || '', p.evening_diastolic || '', p.evening_temp || '', p.evening_time || '',
     p.condition || '', p.condition_memo || '', p.meal_status || '', p.meal_memo || '',
-    cleanStool, p.stool_type || '', p.updated_by || '', updatedRole, updatedAt
+    cleanStool, p.stool_type || '', p.updated_by || '', updatedByName, updatedRole, updatedAt
   ];
 
   if (rowIdx > 0) {
@@ -203,7 +204,13 @@ function handleSaveDailyCare(ss, p) {
     sheet.appendRow(rowData);
   }
 
-  return createJsonResponse({ success: true, message: "케어 기록이 저장되었습니다.", record_id: recordId, updated_role: updatedRole });
+  return createJsonResponse({ 
+    success: true, 
+    message: "일일 케어 현황 기록 저장이 성공적으로 완료되었습니다.", 
+    record_id: recordId, 
+    updated_role: updatedRole,
+    updated_by_name: updatedByName
+  });
 }
 
 // 5. 월간 기록 조회

@@ -237,8 +237,19 @@ class UIComponents {
       const cleanStoolCount = isNaN(rawCount) || rawCount < 0 ? 0 : (rawCount > 10 ? 1 : rawCount);
       const stoolDisplay = cleanStoolCount === 0 ? '0회 (미배변)' : `${cleanStoolCount}회 / ${record.stool_type || '부드러움'}`;
 
+      const authorText = record.updated_by_name ? ` (${record.updated_by_name})` : '';
+      const creatorBadge = record.updated_role === '가족'
+        ? `<span class="badge badge-blue">👨‍👩‍👧 가족 직접 작성${authorText}</span>`
+        : `<span class="badge badge-green">🧑‍⚕️ 요양보호사 작성${authorText}</span>`;
+
       modalContent.innerHTML = `
         <div style="display: flex; flex-direction: column; gap: 16px;">
+          <!-- 작성자 구분 바 -->
+          <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.85); padding: 10px 14px; border-radius: 12px;">
+            <span style="font-size: 0.85rem; font-weight: 600; color: var(--text-muted);">작성자 구별:</span>
+            ${creatorBadge}
+          </div>
+
           <!-- 혈압/체온 아침/저녁 -->
           <div class="glass-card" style="padding: 16px; margin: 0; background: rgba(255,255,255,0.9);">
             <div style="font-weight: 700; color: var(--primary-blue); margin-bottom: 10px;">🌅 아침 케어 체크 (${formatTime(record.morning_time)})</div>

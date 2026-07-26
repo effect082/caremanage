@@ -418,10 +418,15 @@ class App {
     });
   }
 
-  updateStatusBadge(isWritten) {
-    const badgeHTML = isWritten 
-      ? `<span class="badge badge-green">✔ 오늘 기록 작성 완료</span>` 
-      : `<span class="badge badge-warning">⚠ 오늘 기록 미작성</span>`;
+  updateStatusBadge(isWritten, role = '', authorName = '') {
+    let badgeHTML = `<span class="badge badge-warning">⚠ 오늘 기록 미작성</span>`;
+    if (isWritten) {
+      if (role === '가족') {
+        badgeHTML = `<span class="badge badge-blue">✔ 오늘 기록 작성 완료 (👨‍👩‍👧 가족 작성)</span>`;
+      } else {
+        badgeHTML = `<span class="badge badge-green">✔ 오늘 기록 작성 완료 (🧑‍⚕️ 요양보호사)</span>`;
+      }
+    }
       
     ['dashStatusBadge', 'todayStatusBadge', 'familyStatusBadge'].forEach(id => {
       const el = document.getElementById(id);
@@ -485,7 +490,7 @@ class App {
       }
 
       this.validateHealthInputs();
-      this.updateStatusBadge(true);
+      this.updateStatusBadge(true, d.updated_role, d.updated_by_name);
     } else {
       this.updateStatusBadge(false);
     }
@@ -519,15 +524,22 @@ class App {
     }
 
     const sorted = [...records].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 7);
-    historyList.innerHTML = sorted.map(r => `
-      <div style="display:flex; justify-content:space-between; align-items:center; padding: 10px 14px; background: rgba(255,255,255,0.7); border-radius: 12px; margin-bottom: 8px;">
-        <div>
-          <span style="font-weight: 700; color: var(--text-dark);">${r.date}</span>
-          <span class="badge badge-blue" style="margin-left: 8px;">${r.condition || '기록'}</span>
+    historyList.innerHTML = sorted.map(r => {
+      const creatorBadge = r.updated_role === '가족'
+        ? `<span class="badge badge-blue" style="margin-left: 6px; font-size: 0.72rem; padding: 2px 8px;">👨‍👩‍👧 가족</span>`
+        : `<span class="badge badge-green" style="margin-left: 6px; font-size: 0.72rem; padding: 2px 8px;">🧑‍⚕️ 요양보호사</span>`;
+
+      return `
+        <div style="display:flex; justify-content:space-between; align-items:center; padding: 10px 14px; background: rgba(255,255,255,0.7); border-radius: 12px; margin-bottom: 8px;">
+          <div>
+            <span style="font-weight: 700; color: var(--text-dark);">${r.date}</span>
+            <span class="badge badge-blue" style="margin-left: 8px;">${r.condition || '기록'}</span>
+            ${creatorBadge}
+          </div>
+          <button class="btn btn-secondary" style="width: auto; min-height: 32px; padding: 4px 12px; font-size: 0.85rem;" onclick="app.openDetailModalForDate('${r.date}')">상세보기</button>
         </div>
-        <button class="btn btn-secondary" style="width: auto; min-height: 32px; padding: 4px 12px; font-size: 0.85rem;" onclick="app.openDetailModalForDate('${r.date}')">상세보기</button>
-      </div>
-    `).join('');
+      `;
+    }).join('');
   }
 
   // 케어 기록 저장
@@ -574,6 +586,7 @@ class App {
       stool_count: cleanStoolCount,
       stool_type: this.selectedStoolType,
       updated_by: user.user_id,
+      updated_by_name: user.name,
       updated_role: user.role
     };
 
@@ -581,8 +594,12 @@ class App {
     const res = await gasApi.saveDailyCare(user.elder_code, this.currentDateStr, careData);
 
     if (res.success) {
-      this.showToast('일일 케어 기록이 성공적으로 저장되었습니다!', 'success');
-      this.updateStatusBadge(true);
+      const confirmNotice = user.role === '가족'
+        ? '🎉 [가족 직접 저장 완료] 어르신 일일 케어 기록 저장이 성공적으로 완료되었습니다!'
+        : '🎉 [요양보호사 저장 완료] 어르신 일일 케어 기록 저장이 성공적으로 완료되었습니다!';
+      
+      this.showToast(confirmNotice, 'success');
+      this.updateStatusBadge(true, user.role, user.name);
       this.loadRecentHistory();
     } else {
       this.showToast(res.message || '저장 실패', 'danger');
@@ -603,11 +620,12 @@ class App {
 
     if (res.success && res.data) {
       const d = res.data;
-      this.updateStatusBadge(true);
+      this.updateStatusBadge(true, d.updated_role, d.updated_by_name);
       
+      const authorText = d.updated_by_name ? ` (${d.updated_by_name})` : '';
       const roleBadge = d.updated_role === '가족'
-        ? `<span class="badge badge-blue">👨‍👩‍👧 가족 직접 작성 (주말/휴가)</span>`
-        : `<span class="badge badge-green">🧑‍⚕️ 요양보호사 작성</span>`;
+        ? `<span class="badge badge-blue">👨‍👩‍👧 가족 직접 작성${authorText}</span>`
+        : `<span class="badge badge-green">🧑‍⚕️ 요양보호사 작성${authorText}</span>`;
 
       const rawCount = parseInt(d.stool_count, 10);
       const cleanStool = isNaN(rawCount) || rawCount < 0 ? 0 : (rawCount > 10 ? 1 : rawCount);
