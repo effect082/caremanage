@@ -120,7 +120,13 @@ class App {
         return;
       }
 
-      this.showToast('로그인 중...', 'info');
+      const loginBtn = document.getElementById('loginSubmitBtn');
+      if (loginBtn) {
+        loginBtn.disabled = true;
+        loginBtn.innerHTML = '⏳ 로그인 진행 중...';
+      }
+
+      this.showToast('⏳ 로그인 진행 중...', 'info');
       const res = await gasApi.login(name, role, pin);
 
       if (res.success) {
@@ -128,10 +134,15 @@ class App {
           ...res.user,
           elder_name: res.elder ? res.elder.elder_name : `${name} 댁 어르신`
         });
-        this.showToast('로그인되었습니다.', 'success');
+        this.showToast('로그인이 완료되었습니다.', 'success');
         this.checkAuthAndRender();
       } else {
         this.showToast(res.message || '로그인 실패', 'danger');
+      }
+
+      if (loginBtn) {
+        loginBtn.disabled = false;
+        loginBtn.innerHTML = '로그인하기';
       }
     });
 
@@ -149,14 +160,31 @@ class App {
         return;
       }
 
-      this.showToast('회원가입 처리 중...', 'info');
+      const signupBtn = document.getElementById('signupSubmitBtn');
+      if (signupBtn) {
+        signupBtn.disabled = true;
+        signupBtn.innerHTML = '⏳ 회원 가입 진행 중...';
+      }
+
+      this.showToast('⏳ 회원 가입 진행 중...', 'info');
       const res = await gasApi.signup(name, role, pin, elderCode, elderName);
 
       if (res.success) {
-        this.showToast('회원가입이 완료되었습니다. 로그인해 주세요.', 'success');
+        this.showToast('🎉 회원 가입이 완료되었습니다! 로그인해 주세요.', 'success');
+        
+        // 로그인 폼으로 자동 이동 및 이름 미리 채우기
+        document.getElementById('loginName').value = name;
+        if (this.pinPadController) this.pinPadController.clear();
+        if (this.signupPinPadController) this.signupPinPadController.clear();
+        
         document.querySelector('.auth-tab-btn[data-tab="login"]').click();
       } else {
         this.showToast(res.message || '회원가입 실패', 'danger');
+      }
+
+      if (signupBtn) {
+        signupBtn.disabled = false;
+        signupBtn.innerHTML = '회원가입 완료';
       }
     });
 
