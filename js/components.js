@@ -206,6 +206,19 @@ class UIComponents {
         </div>
       `;
     } else {
+      const formatTime = (t) => {
+        if (!t) return '시간미입력';
+        const str = String(t);
+        if (str.includes('T')) {
+          const timePart = str.split('T')[1];
+          if (timePart) {
+            const parts = timePart.split(':');
+            return `${parts[0]}:${parts[1]}`;
+          }
+        }
+        return str;
+      };
+
       const getTempBadge = (t) => {
         if (!t) return '-';
         if (t >= CONFIG.THRESHOLDS.HIGH_TEMP) return `<span class="badge badge-danger">${t} ℃ (발열 경고)</span>`;
@@ -220,11 +233,15 @@ class UIComponents {
         return `<span class="badge badge-blue">${sys}/${dia} mmHg</span>`;
       };
 
+      const rawCount = parseInt(record.stool_count, 10);
+      const cleanStoolCount = isNaN(rawCount) || rawCount < 0 ? 0 : (rawCount > 10 ? 1 : rawCount);
+      const stoolDisplay = cleanStoolCount === 0 ? '0회 (미배변)' : `${cleanStoolCount}회 / ${record.stool_type || '부드러움'}`;
+
       modalContent.innerHTML = `
         <div style="display: flex; flex-direction: column; gap: 16px;">
           <!-- 혈압/체온 아침/저녁 -->
           <div class="glass-card" style="padding: 16px; margin: 0; background: rgba(255,255,255,0.9);">
-            <div style="font-weight: 700; color: var(--primary-blue); margin-bottom: 10px;">🌅 아침 케어 체크 (${record.morning_time || '시간미입력'})</div>
+            <div style="font-weight: 700; color: var(--primary-blue); margin-bottom: 10px;">🌅 아침 케어 체크 (${formatTime(record.morning_time)})</div>
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
               <span class="text-medium">혈압:</span>
               ${getBPBadge(record.morning_systolic, record.morning_diastolic)}
@@ -236,7 +253,7 @@ class UIComponents {
           </div>
 
           <div class="glass-card" style="padding: 16px; margin: 0; background: rgba(255,255,255,0.9);">
-            <div style="font-weight: 700; color: var(--primary-blue); margin-bottom: 10px;">🌙 저녁 케어 체크 (${record.evening_time || '시간미입력'})</div>
+            <div style="font-weight: 700; color: var(--primary-blue); margin-bottom: 10px;">🌙 저녁 케어 체크 (${formatTime(record.evening_time)})</div>
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
               <span class="text-medium">혈압:</span>
               ${getBPBadge(record.evening_systolic, record.evening_diastolic)}
@@ -263,7 +280,7 @@ class UIComponents {
 
             <div style="margin-top: 12px; display: flex; justify-content: space-between;">
               <span style="font-weight: 600;">🚽 배변 상태:</span>
-              <span style="font-weight: 700; color: var(--primary-blue);">${record.stool_count || 0}회 / ${record.stool_type || '형태미선택'}</span>
+              <span style="font-weight: 700; color: var(--primary-blue);">${stoolDisplay}</span>
             </div>
           </div>
         </div>

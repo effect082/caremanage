@@ -186,12 +186,15 @@ function handleSaveDailyCare(ss, p) {
   var updatedAt = new Date().toISOString();
   var updatedRole = p.updated_role || '요양보호사';
 
+  var parsedStool = parseInt(p.stool_count, 10);
+  var cleanStool = isNaN(parsedStool) || parsedStool < 0 ? 0 : Math.min(10, parsedStool);
+
   var rowData = [
     recordId, p.elder_code, p.date,
     p.morning_systolic || '', p.morning_diastolic || '', p.morning_temp || '', p.morning_time || '',
     p.evening_systolic || '', p.evening_diastolic || '', p.evening_temp || '', p.evening_time || '',
     p.condition || '', p.condition_memo || '', p.meal_status || '', p.meal_memo || '',
-    p.stool_count || 0, p.stool_type || '', p.updated_by || '', updatedRole, updatedAt
+    cleanStool, p.stool_type || '', p.updated_by || '', updatedRole, updatedAt
   ];
 
   if (rowIdx > 0) {

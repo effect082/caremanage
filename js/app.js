@@ -462,7 +462,14 @@ class App {
 
       if (d.condition_memo) { const el = document.getElementById('conditionMemo'); if (el) el.value = d.condition_memo; }
       if (d.meal_memo) { const el = document.getElementById('mealMemo'); if (el) el.value = d.meal_memo; }
-      if (d.stool_count !== undefined) { const el = document.getElementById('stoolCount'); if (el) el.value = d.stool_count; }
+      if (d.stool_count !== undefined) {
+        const el = document.getElementById('stoolCount');
+        if (el) {
+          let parsedStool = parseInt(d.stool_count, 10);
+          if (isNaN(parsedStool) || parsedStool < 0 || parsedStool > 10) parsedStool = 0;
+          el.value = parsedStool;
+        }
+      }
 
       if (d.condition) {
         this.selectedCondition = d.condition;
@@ -542,6 +549,12 @@ class App {
     const mealMemoEl = document.getElementById('mealMemo');
     const stoolCountEl = document.getElementById('stoolCount');
 
+    let cleanStoolCount = 0;
+    if (stoolCountEl) {
+      const parsed = parseInt(stoolCountEl.value, 10);
+      cleanStoolCount = isNaN(parsed) || parsed < 0 ? 0 : Math.min(10, parsed);
+    }
+
     const careData = {
       morning_systolic: morningSysEl ? parseFloat(morningSysEl.value) || null : null,
       morning_diastolic: morningDiaEl ? parseFloat(morningDiaEl.value) || null : null,
@@ -558,7 +571,7 @@ class App {
       meal_status: this.selectedMeal,
       meal_memo: mealMemoEl ? mealMemoEl.value.trim() : '',
 
-      stool_count: stoolCountEl ? parseInt(stoolCountEl.value) || 0 : 0,
+      stool_count: cleanStoolCount,
       stool_type: this.selectedStoolType,
       updated_by: user.user_id,
       updated_role: user.role
@@ -596,6 +609,10 @@ class App {
         ? `<span class="badge badge-blue">👨‍👩‍👧 가족 직접 작성 (주말/휴가)</span>`
         : `<span class="badge badge-green">🧑‍⚕️ 요양보호사 작성</span>`;
 
+      const rawCount = parseInt(d.stool_count, 10);
+      const cleanStool = isNaN(rawCount) || rawCount < 0 ? 0 : (rawCount > 10 ? 1 : rawCount);
+      const stoolText = cleanStool === 0 ? '0회 (미배변)' : `${cleanStool}회 (${d.stool_type || '부드러움'})`;
+
       if (summaryCard) {
         summaryCard.innerHTML = `
           <div style="margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;">
@@ -628,7 +645,7 @@ class App {
           <div style="display: flex; gap: 10px; flex-wrap: wrap;">
             <span class="badge badge-blue">😀 컨디션: ${d.condition || '미입력'}</span>
             <span class="badge badge-blue">🍚 식사: ${d.meal_status || '미입력'}</span>
-            <span class="badge badge-blue">🚽 배변: ${d.stool_count || 0}회 (${d.stool_type || '형태미선택'})</span>
+            <span class="badge badge-blue">🚽 배변: ${stoolText}</span>
           </div>
 
           <div style="margin-top: 16px;">
