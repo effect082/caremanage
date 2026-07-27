@@ -155,6 +155,19 @@ class App {
     }
   }
 
+  // 어르신 코드 안전 획득 헬퍼 (로그인 유무 상관없이 안전 반환)
+  getElderCode() {
+    const user = store.currentUser;
+    if (user && user.elder_code) return user.elder_code;
+    try {
+      const localElders = JSON.parse(localStorage.getItem(CONFIG.KEYS.LOCAL_ELDERS) || '[]');
+      if (localElders.length > 0 && localElders[0].elder_code) {
+        return localElders[0].elder_code;
+      }
+    } catch (e) {}
+    return 'ELDER001';
+  }
+
   // 케어 작성 탭으로 즉시 전환
   switchToCareWriteTab() {
     this.switchView('caregiverWriteView');
@@ -185,6 +198,9 @@ class App {
 
   // 이력 보고서 기간 이동 (이전 / 다음)
   navigateReportPeriod(direction) {
+    if (!this.reportDateStr) {
+      this.reportDateStr = CONFIG.getKSTDateString();
+    }
     const parts = this.reportDateStr.split('-').map(Number);
     const dateObj = new Date(parts[0], parts[1] - 1, parts[2]);
 
@@ -202,54 +218,64 @@ class App {
 
   // 이력 보고서 데이터 로드 (SWR 0ms 로컬 캐시 + GAS 백그라운드 동기화)
   async loadReportData() {
-    const user = store.currentUser;
-    if (!user) return;
+    try {
+      const elderCode = this.getElderCode();
+      if (!this.reportDateStr) {
+        this.reportDateStr = CONFIG.getKSTDateString();
+      }
 
-    const labelEl = document.getElementById('reportPeriodDisplayLabel');
+      const labelEl = document.getElementById('reportPeriodDisplayLabel');
 
-    if (this.reportMode === 'daily') {
-      if (labelEl) labelEl.textContent = CONFIG.formatKSTDateDisplay(this.reportDateStr);
+      if (this.reportMode === 'daily') {
+        if (labelEl) labelEl.textContent = CONFIG.formatKSTDateDisplay(this.reportDateStr);
 
-      const localRec = store.getLocalRecord(user.elder_code, this.reportDateStr);
-      uiComponents.renderDailyReport('careReportContainer', localRec, this.reportDateStr);
+        const localRec = store.getLocalRecord(elderCode, this.reportDateStr);
+        uiComponents.renderDailyReport('careReportContainer', localRec, this.reportDateStr);
 
-      gasApi.getDailyCare(user.elder_code, this.reportDateStr).then(res => {
-        if (res && res.success && res.data) {
-          store.saveLocalRecord(user.elder_code, this.reportDateStr, res.data);
-          uiComponents.renderDailyReport('careReportContainer', res.data, this.reportDateStr);
-        }
-      });
+        gasApi.getDailyCare(elderCode, this.reportDateStr).then(res => {
+          if (res && res.success && res.data) {
+            store.saveLocalRecord(elderCode, this.reportDateStr, res.data);
+            uiComponents.renderDailyReport('careReportContainer', res.data, this.reportDateStr);
+          }
+        }).catch(e => console.warn('gasApi.getDailyCare error:', e));
 
-    } else if (this.reportMode === 'weekly') {
-      const { startDateStr, endDateStr } = CONFIG.getKSTWeekRange(this.reportDateStr);
-      if (labelEl) labelEl.textContent = CONFIG.formatKSTDateRangeDisplay(startDateStr, endDateStr);
+      } else if (this.reportMode === 'weekly') {
+        const { startDateStr, endDateStr } = CONFIG.getKSTWeekRange(this.reportDateStr);
+        if (labelEl) labelEl.textContent = CONFIG.formatKSTDateRangeDisplay(startDateStr, endDateStr);
 
-      const yearMonth = startDateStr.slice(0, 7);
-      const localMonthly = store.getLocalMonthlyRecords(user.elder_code, yearMonth);
-      const filteredLocal = localMonthly.filter(r => r.date >= startDateStr && r.date <= endDateStr);
+        const yearMonth = startDateStr.slice(0, 7);
+        const localMonthly = store.getLocalMonthlyRecords(elderCode, yearMonth) || [];
+        const safeLocal = Array.isArray(localMonthly) ? localMonthly : (typeof localMonthly === 'object' ? Object.values(localMonthly) : []);
+        const filteredLocal = safeLocal.filter(r => r && r.date >= startDateStr && r.date <= endDateStr);
 
-      uiComponents.renderWeeklyReport('careReportContainer', filteredLocal, startDateStr, endDateStr);
+        uiComponents.renderWeeklyReport('careReportContainer', filteredLocal, startDateStr, endDateStr);
 
-      gasApi.getMonthlyCare(user.elder_code, yearMonth).then(res => {
-        if (res && res.success && res.data) {
-          const filtered = res.data.filter(r => r.date >= startDateStr && r.date <= endDateStr);
-          uiComponents.renderWeeklyReport('careReportContainer', filtered, startDateStr, endDateStr);
-        }
-      });
+        gasApi.getMonthlyCare(elderCode, yearMonth).then(res => {
+          if (res && res.success && res.data) {
+            const rawList = Array.isArray(res.data) ? res.data : (typeof res.data === 'object' ? Object.values(res.data) : []);
+            const filtered = rawList.filter(r => r && r.date >= startDateStr && r.date <= endDateStr);
+            uiComponents.renderWeeklyReport('careReportContainer', filtered, startDateStr, endDateStr);
+          }
+        }).catch(e => console.warn('gasApi.getMonthlyCare error:', e));
 
-    } else if (this.reportMode === 'monthly') {
-      const yearMonth = this.reportDateStr.slice(0, 7);
-      const [year, month] = yearMonth.split('-');
-      if (labelEl) labelEl.textContent = `${year}년 ${Number(month)}월 케어 리포트`;
+      } else if (this.reportMode === 'monthly') {
+        const yearMonth = this.reportDateStr.slice(0, 7);
+        const [year, month] = yearMonth.split('-');
+        if (labelEl) labelEl.textContent = `${year}년 ${Number(month)}월 케어 리포트`;
 
-      const localMonthly = store.getLocalMonthlyRecords(user.elder_code, yearMonth);
-      uiComponents.renderMonthlyReport('careReportContainer', localMonthly, yearMonth);
+        const localMonthly = store.getLocalMonthlyRecords(elderCode, yearMonth) || [];
+        const safeLocal = Array.isArray(localMonthly) ? localMonthly : (typeof localMonthly === 'object' ? Object.values(localMonthly) : []);
+        uiComponents.renderMonthlyReport('careReportContainer', safeLocal, yearMonth);
 
-      gasApi.getMonthlyCare(user.elder_code, yearMonth).then(res => {
-        if (res && res.success && res.data) {
-          uiComponents.renderMonthlyReport('careReportContainer', res.data, yearMonth);
-        }
-      });
+        gasApi.getMonthlyCare(elderCode, yearMonth).then(res => {
+          if (res && res.success && res.data) {
+            const safeResData = Array.isArray(res.data) ? res.data : (typeof res.data === 'object' ? Object.values(res.data) : []);
+            uiComponents.renderMonthlyReport('careReportContainer', safeResData, yearMonth);
+          }
+        }).catch(e => console.warn('gasApi.getMonthlyCare error:', e));
+      }
+    } catch (err) {
+      console.error('loadReportData failed:', err);
     }
   }
 

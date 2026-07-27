@@ -454,8 +454,10 @@ class UIComponents {
     const container = document.getElementById(containerId);
     if (!container) return;
 
+    const safeRecords = Array.isArray(records) ? records : (records && typeof records === 'object' ? Object.values(records) : []);
+
     const totalDays = 7;
-    const writtenDays = records.length;
+    const writtenDays = safeRecords.length;
     const completionPct = Math.round((writtenDays / totalDays) * 100);
 
     // 바이탈 평균 집계
@@ -464,7 +466,7 @@ class UIComponents {
     let medDoneCount = 0;
     let condGood = 0, condNormal = 0, condLow = 0;
 
-    records.forEach(r => {
+    safeRecords.forEach(r => {
       if (r.morning_systolic) { sumMorningSys += Number(r.morning_systolic); sumMorningDia += Number(r.morning_diastolic); countMorning++; }
       if (r.morning_temp) { sumMorningTemp += Number(r.morning_temp); }
       if (r.evening_systolic) { sumEveningSys += Number(r.evening_systolic); sumEveningDia += Number(r.evening_diastolic); countEvening++; }
@@ -498,7 +500,7 @@ class UIComponents {
       const curDate = new Date(startDate.getTime());
       curDate.setDate(curDate.getDate() + i);
       const curDateStr = CONFIG.getKSTDateString(curDate);
-      const dayRec = records.find(r => r.date === curDateStr);
+      const dayRec = safeRecords.find(r => r.date === curDateStr);
       const dayDisplay = CONFIG.formatKSTDateDisplay(curDateStr);
 
       let statusBadge = `<span class="badge badge-warning">미작성</span>`;
@@ -516,20 +518,20 @@ class UIComponents {
             <span style="margin-left: 8px;">${statusBadge}</span>
           </div>
           <div>
-            ${dayRec ? `<button class="btn btn-secondary" style="width: auto; min-height: 28px; padding: 2px 10px; font-size: 0.78rem;" onclick="app.openDetailModalForDate('${curDateStr}')">상세보기</button>` : '<span class="text-muted" style="font-size: 0.8rem;">기록없음</span>'}
+            ${dayRec ? `<button type="button" class="btn btn-secondary" style="width: auto; min-height: 28px; padding: 2px 10px; font-size: 0.78rem;" onclick="app.openDetailModalForDate('${curDateStr}')">상세보기</button>` : '<span class="text-muted" style="font-size: 0.8rem;">기록없음</span>'}
           </div>
         </div>
       `;
     }
 
     container.innerHTML = `
-      <div class="glass-card" style="padding: 20px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+      <div style="background: rgba(255,255,255,0.75); border: 1px solid var(--border-subtle); border-radius: 18px; padding: 20px; box-shadow: 0 4px 16px rgba(0,0,0,0.02);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 10px;">
           <div>
-            <h3 style="margin: 0; font-size: 1.15rem; color: var(--primary-blue);">주간 케어 리포트</h3>
+            <h3 style="margin: 0; font-size: 1.18rem; color: var(--primary-blue);">주간 케어 리포트</h3>
             <span class="text-muted" style="font-size: 0.85rem;">${CONFIG.formatKSTDateRangeDisplay(startDateStr, endDateStr)}</span>
           </div>
-          <span class="badge badge-green" style="font-size: 0.9rem; padding: 6px 12px;">작성률 ${completionPct}% (${writtenDays}/7일)</span>
+          <span class="badge badge-green" style="font-size: 0.9rem; padding: 6px 14px;">작성률 ${completionPct}% (${writtenDays}/7일)</span>
         </div>
 
         <!-- 주간 통계 카드 그리드 -->
@@ -565,8 +567,8 @@ class UIComponents {
         </div>
 
         <!-- 일별 케어 이력 상세 목록 -->
-        <div style="margin-top: 18px;">
-          <div style="font-weight: 700; font-size: 0.95rem; margin-bottom: 10px; color: var(--text-dark);">📅 주간 일별 작성 이력</div>
+        <div style="margin-top: 20px;">
+          <div style="font-weight: 700; font-size: 1rem; margin-bottom: 12px; color: var(--text-dark);">📅 주간 일별 작성 이력</div>
           ${dayListHTML}
         </div>
       </div>
@@ -578,15 +580,17 @@ class UIComponents {
     const container = document.getElementById(containerId);
     if (!container) return;
 
+    const safeRecords = Array.isArray(records) ? records : (records && typeof records === 'object' ? Object.values(records) : []);
+
     const [year, month] = yearMonthStr.split('-').map(Number);
     const totalDaysInMonth = new Date(year, month, 0).getDate();
-    const writtenCount = records.length;
+    const writtenCount = safeRecords.length;
     const monthPct = Math.round((writtenCount / totalDaysInMonth) * 100);
 
     let sumSys = 0, sumDia = 0, sumTemp = 0, validCount = 0;
     let condGood = 0, condNormal = 0, condLow = 0;
 
-    records.forEach(r => {
+    safeRecords.forEach(r => {
       if (r.morning_systolic) { sumSys += Number(r.morning_systolic); sumDia += Number(r.morning_diastolic); validCount++; }
       if (r.morning_temp) { sumTemp += Number(r.morning_temp); }
 
@@ -600,16 +604,16 @@ class UIComponents {
     const avgTemp = validCount > 0 ? (sumTemp / validCount).toFixed(1) : '--';
 
     container.innerHTML = `
-      <div class="glass-card" style="padding: 20px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+      <div style="background: rgba(255,255,255,0.75); border: 1px solid var(--border-subtle); border-radius: 18px; padding: 20px; box-shadow: 0 4px 16px rgba(0,0,0,0.02);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 10px;">
           <div>
-            <h3 style="margin: 0; font-size: 1.15rem; color: var(--primary-blue);">${year}년 ${month}월 월간 종합 보고서</h3>
+            <h3 style="margin: 0; font-size: 1.18rem; color: var(--primary-blue);">${year}년 ${month}월 월간 종합 보고서</h3>
             <span class="text-muted" style="font-size: 0.85rem;">월간 총 기록 ${writtenCount}일 / ${totalDaysInMonth}일 (${monthPct}%)</span>
           </div>
-          <span class="badge badge-blue" style="font-size: 0.9rem; padding: 6px 12px;">평균 혈압 ${avgSys}/${avgDia}</span>
+          <span class="badge badge-blue" style="font-size: 0.9rem; padding: 6px 14px;">평균 혈압 ${avgSys}/${avgDia}</span>
         </div>
 
-        <div class="report-stat-grid" style="grid-template-columns: repeat(3, 1fr); margin-bottom: 18px;">
+        <div class="report-stat-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); margin-bottom: 20px;">
           <div class="report-stat-card">
             <div class="report-stat-label">📝 총 작성일수</div>
             <div class="report-stat-val">${writtenCount}일</div>
@@ -633,12 +637,12 @@ class UIComponents {
 
         <!-- 월간 달력 & 추이 차트 임베디드 레이아웃 -->
         <div style="margin-top: 20px;">
-          <div style="font-weight: 700; font-size: 1.05rem; margin-bottom: 10px; color: var(--text-dark);">📆 ${year}년 ${month}월 케어 달력</div>
+          <div style="font-weight: 700; font-size: 1.05rem; margin-bottom: 12px; color: var(--text-dark);">📆 ${year}년 ${month}월 케어 달력</div>
           <div id="reportMonthCalendarContainer"></div>
         </div>
 
         <div style="margin-top: 24px;">
-          <div style="font-weight: 700; font-size: 1.05rem; margin-bottom: 10px; color: var(--text-dark);">📈 ${year}년 ${month}월 혈압 & 체온 추이 그래프</div>
+          <div style="font-weight: 700; font-size: 1.05rem; margin-bottom: 12px; color: var(--text-dark);">📈 ${year}년 ${month}월 혈압 & 체온 추이 그래프</div>
           <div class="chart-wrapper">
             <canvas id="reportMonthTrendCanvas"></canvas>
           </div>
@@ -648,12 +652,12 @@ class UIComponents {
 
     // 렌더링 직후 달력과 차트 세팅
     setTimeout(() => {
-      this.renderCalendar('reportMonthCalendarContainer', year, month, records, (dStr, rec) => {
+      this.renderCalendar('reportMonthCalendarContainer', year, month, safeRecords, (dStr, rec) => {
         if (window.app && window.app.openDetailModalForDate) {
           window.app.openDetailModalForDate(dStr);
         }
       });
-      this.renderTrendChart('reportMonthTrendCanvas', records);
+      this.renderTrendChart('reportMonthTrendCanvas', safeRecords);
     }, 50);
   }
 }
