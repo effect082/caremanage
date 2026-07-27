@@ -393,31 +393,54 @@
         </div>
       </div>
 
-      <!-- Pane 2: 이력 보고서 뷰 (일 / 주 / 월 단위 선택 가능) -->
+      <!-- Pane 2: 이력 보고서 뷰 (일 / 주 / 월 단위 선택 가능 - 반응형 컴포넌트) -->
       <div id="todaySummaryView" class="view-pane" style="display: none;">
-        <!-- 기간별 세그먼트 탭 필터 -->
-        <div class="report-segmented-control">
-          <button class="segment-btn active" data-mode="daily" onclick="app.setReportMode('daily')">
-            <span>📊 일 단위</span>
-          </button>
-          <button class="segment-btn" data-mode="weekly" onclick="app.setReportMode('weekly')">
-            <span>📅 주 단위</span>
-          </button>
-          <button class="segment-btn" data-mode="monthly" onclick="app.setReportMode('monthly')">
-            <span>📆 월 단위</span>
-          </button>
-        </div>
+        <div class="glass-card report-main-card">
+          
+          <!-- Top Header: Title & Segmented Control -->
+          <div class="report-header-wrapper">
+            <div class="report-title-box">
+              <h2 style="font-size: 1.25rem; font-weight: 800; color: var(--primary-blue); margin: 0; display: flex; align-items: center; gap: 8px;">
+                <span>📑</span> 케어 이력 및 보고서
+              </h2>
+              <p class="text-muted" style="margin: 3px 0 0 0; font-size: 0.82rem;">일, 주, 월 단위로 어르신의 건강 기록을 통합 분석합니다.</p>
+            </div>
 
-        <!-- 기간 이동 내비게이션 헤더 -->
-        <div class="period-nav-header">
-          <button class="period-nav-btn" onclick="app.navigateReportPeriod(-1)" title="이전 기간">◀</button>
-          <div id="reportPeriodDisplayLabel" class="period-display-label">2026-07-28 (화)</div>
-          <button class="period-nav-btn" onclick="app.navigateReportPeriod(1)" title="다음 기간">▶</button>
-        </div>
+            <!-- Segmented Mode Control -->
+            <div class="report-segmented-control">
+              <button type="button" class="segment-btn active" data-mode="daily" onclick="app.setReportMode('daily')">
+                <span>📊 일 단위</span>
+              </button>
+              <button type="button" class="segment-btn" data-mode="weekly" onclick="app.setReportMode('weekly')">
+                <span>📅 주 단위</span>
+              </button>
+              <button type="button" class="segment-btn" data-mode="monthly" onclick="app.setReportMode('monthly')">
+                <span>📆 월 단위</span>
+              </button>
+            </div>
+          </div>
 
-        <!-- 보고서 카드 컨테이너 -->
-        <div id="careReportContainer">
-          <!-- Dynamically rendered by uiComponents based on selected mode -->
+          <!-- Period Navigation Toolbar -->
+          <div class="period-nav-toolbar">
+            <button type="button" class="period-nav-btn" onclick="app.navigateReportPeriod(-1)" title="이전 기간">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+            </button>
+            
+            <div class="period-label-wrapper">
+              <span id="reportPeriodDisplayLabel" class="period-display-label">2026-07-28 (화)</span>
+              <button type="button" class="today-reset-btn" onclick="app.resetReportPeriodToToday()">오늘로 이동</button>
+            </div>
+
+            <button type="button" class="period-nav-btn" onclick="app.navigateReportPeriod(1)" title="다음 기간">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+            </button>
+          </div>
+
+          <!-- Dynamic Report Content Area -->
+          <div id="careReportContainer" class="care-report-container">
+            <!-- Rendered dynamically by uiComponents -->
+          </div>
+
         </div>
       </div>
 

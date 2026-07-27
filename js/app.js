@@ -155,6 +155,17 @@ class App {
     }
   }
 
+  // 케어 작성 탭으로 즉시 전환
+  switchToCareWriteTab() {
+    this.switchView('caregiverWriteView');
+  }
+
+  // 오늘 날짜로 이력 보고서 리셋
+  resetReportPeriodToToday() {
+    this.reportDateStr = CONFIG.getKSTDateString();
+    this.loadReportData();
+  }
+
   // ==========================================================================
   // 기간별(일/주/월) 케어 이력 보고서 상태 제어 메서드
   // ==========================================================================

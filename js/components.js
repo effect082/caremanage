@@ -376,10 +376,13 @@ class UIComponents {
 
     if (!record) {
       container.innerHTML = `
-        <div class="glass-card text-center" style="padding: 30px 20px;">
-          <div style="font-size: 2.5rem; margin-bottom: 8px;">📭</div>
-          <h3 style="margin: 0 0 6px 0; color: var(--text-dark);">${CONFIG.formatKSTDateDisplay(dateStr)}</h3>
-          <p class="text-muted" style="margin: 0;">해당 일자에 등록된 케어 작성 기록이 없습니다.</p>
+        <div style="background: rgba(255,255,255,0.7); border: 1px dashed rgba(47,111,237,0.3); border-radius: 18px; padding: 40px 20px; text-align: center;">
+          <div style="font-size: 3rem; margin-bottom: 12px;">📭</div>
+          <h3 style="margin: 0 0 8px 0; color: var(--text-dark); font-size: 1.2rem;">${CONFIG.formatKSTDateDisplay(dateStr)}</h3>
+          <p class="text-muted" style="margin: 0 0 18px 0; font-size: 0.92rem;">선택하신 일자에 등록된 케어 작성 기록이 없습니다.</p>
+          <button type="button" class="btn btn-primary" style="width: auto; min-height: 42px; padding: 8px 24px; font-size: 0.92rem; margin: 0 auto; display: inline-flex; align-items: center; gap: 6px; border-radius: 12px;" onclick="app.switchToCareWriteTab()">
+            <span>✍️</span> 오늘 케어 기록 작성하기
+          </button>
         </div>
       `;
       return;
@@ -403,44 +406,44 @@ class UIComponents {
     };
 
     container.innerHTML = `
-      <div class="glass-card" style="padding: 20px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; border-bottom: 1px solid var(--border-subtle); padding-bottom: 10px;">
+      <div style="background: rgba(255,255,255,0.75); border: 1px solid var(--border-subtle); border-radius: 18px; padding: 20px; box-shadow: 0 4px 16px rgba(0,0,0,0.02);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px solid var(--border-subtle); padding-bottom: 12px; flex-wrap: wrap; gap: 10px;">
           <div>
-            <h3 style="margin: 0; font-size: 1.15rem; color: var(--primary-blue);">${CONFIG.formatKSTDateDisplay(dateStr)} 일일 보고서</h3>
+            <h3 style="margin: 0; font-size: 1.18rem; color: var(--primary-blue);">${CONFIG.formatKSTDateDisplay(dateStr)} 일일 보고서</h3>
             <div style="margin-top: 4px;">${authorBadge}</div>
           </div>
-          <span class="badge badge-blue" style="font-size: 0.9rem; padding: 6px 12px;">컨디션: ${record.condition || '보통'}</span>
+          <span class="badge badge-blue" style="font-size: 0.92rem; padding: 6px 14px;">종합 컨디션: ${record.condition || '보통'}</span>
         </div>
 
         <!-- 바이탈 그리드 -->
-        <div class="report-stat-grid" style="grid-template-columns: 1fr 1fr; margin-bottom: 16px;">
+        <div class="report-stat-grid" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); margin-bottom: 18px;">
           <div class="report-stat-card" style="${sysWarnMorning || tempWarnMorning ? 'border: 1px solid var(--alert-red-border); background: var(--alert-red-bg);' : ''}">
-            <div style="font-weight: 700; font-size: 0.85rem; color: var(--text-dark); margin-bottom: 4px;">🌅 아침 체크 (${record.morning_time || '08:30'})</div>
+            <div style="font-weight: 700; font-size: 0.88rem; color: var(--text-dark); margin-bottom: 6px;">🌅 아침 체크 (${record.morning_time || '08:30'})</div>
             <div class="report-stat-val" style="${sysWarnMorning ? 'color: var(--alert-red);' : ''}">${record.morning_systolic || '--'}/${record.morning_diastolic || '--'} <span style="font-size: 0.75rem; font-weight: normal;">mmHg</span></div>
-            <div style="font-size: 0.9rem; font-weight: 700; margin-top: 4px; ${tempWarnMorning ? 'color: var(--alert-red);' : 'color: var(--text-medium);'}">체온: ${record.morning_temp || '--'}℃</div>
+            <div style="font-size: 0.92rem; font-weight: 700; margin-top: 6px; ${tempWarnMorning ? 'color: var(--alert-red);' : 'color: var(--text-medium);'}">체온: ${record.morning_temp || '--'}℃</div>
           </div>
 
           <div class="report-stat-card" style="${sysWarnEvening || tempWarnEvening ? 'border: 1px solid var(--alert-red-border); background: var(--alert-red-bg);' : ''}">
-            <div style="font-weight: 700; font-size: 0.85rem; color: var(--text-dark); margin-bottom: 4px;">🌙 저녁 체크 (${record.evening_time || '18:00'})</div>
+            <div style="font-weight: 700; font-size: 0.88rem; color: var(--text-dark); margin-bottom: 6px;">🌙 저녁 체크 (${record.evening_time || '18:00'})</div>
             <div class="report-stat-val" style="${sysWarnEvening ? 'color: var(--alert-red);' : ''}">${record.evening_systolic || '--'}/${record.evening_diastolic || '--'} <span style="font-size: 0.75rem; font-weight: normal;">mmHg</span></div>
-            <div style="font-size: 0.9rem; font-weight: 700; margin-top: 4px; ${tempWarnEvening ? 'color: var(--alert-red);' : 'color: var(--text-medium);'}">체온: ${record.evening_temp || '--'}℃</div>
+            <div style="font-size: 0.92rem; font-weight: 700; margin-top: 6px; ${tempWarnEvening ? 'color: var(--alert-red);' : 'color: var(--text-medium);'}">체온: ${record.evening_temp || '--'}℃</div>
           </div>
         </div>
 
         <!-- 세부 항목 체크 -->
-        <div style="display: flex; flex-direction: column; gap: 10px; background: rgba(255,255,255,0.7); padding: 14px; border-radius: 14px; border: 1px solid var(--border-subtle);">
-          <div style="display: flex; justify-content: space-between; font-size: 0.92rem;">
+        <div style="display: flex; flex-direction: column; gap: 12px; background: rgba(255,255,255,0.85); padding: 16px; border-radius: 16px; border: 1px solid var(--border-subtle);">
+          <div style="display: flex; justify-content: space-between; font-size: 0.95rem; align-items: center;">
             <span>🍚 <b>식사 상태:</b> ${record.meal_status || '정보없음'}</span>
             <span class="text-muted" style="font-size: 0.85rem;">${record.meal_memo || ''}</span>
           </div>
-          <div style="display: flex; justify-content: space-between; font-size: 0.92rem; border-top: 1px dashed var(--border-subtle); padding-top: 8px;">
+          <div style="display: flex; justify-content: space-between; font-size: 0.95rem; border-top: 1px dashed var(--border-subtle); padding-top: 10px; align-items: center;">
             <span>🚽 <b>배변 현황:</b> ${record.stool_count ? `${record.stool_count}회 (${record.stool_type || '보통'})` : '없음/미작성'}</span>
           </div>
-          <div style="display: flex; justify-content: space-between; font-size: 0.92rem; border-top: 1px dashed var(--border-subtle); padding-top: 8px;">
+          <div style="display: flex; justify-content: space-between; font-size: 0.95rem; border-top: 1px dashed var(--border-subtle); padding-top: 10px; align-items: center;">
             <span>💊 <b>투약 완료:</b> ${getMedText(record)}</span>
           </div>
-          ${record.medication_memo ? `<div style="font-size: 0.85rem; color: var(--text-medium); background: #F0F4FF; padding: 6px 10px; border-radius: 8px;">"${record.medication_memo}"</div>` : ''}
-          ${record.condition_memo ? `<div style="font-size: 0.85rem; color: var(--text-dark); background: #FFF9E6; padding: 8px 10px; border-radius: 8px; margin-top: 4px;">📝 <b>컨디션 메모:</b> ${record.condition_memo}</div>` : ''}
+          ${record.medication_memo ? `<div style="font-size: 0.88rem; color: var(--text-medium); background: #F0F4FF; padding: 8px 12px; border-radius: 10px; border: 1px solid rgba(47,111,237,0.15);">" ${record.medication_memo} "</div>` : ''}
+          ${record.condition_memo ? `<div style="font-size: 0.88rem; color: var(--text-dark); background: #FFF9E6; padding: 10px 12px; border-radius: 10px; border: 1px solid rgba(245,158,11,0.2); margin-top: 4px;">📝 <b>컨디션 메모:</b> ${record.condition_memo}</div>` : ''}
         </div>
       </div>
     `;
