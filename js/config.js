@@ -62,6 +62,43 @@ const CONFIG = {
     } catch (e) {
       return dateStr;
     }
+  },
+
+  // KST 기준 주어진 날짜가 포함된 주(Week)의 월요일~일요일 날짜 범위 반환 (YYYY-MM-DD)
+  getKSTWeekRange: function(date = new Date()) {
+    const parts = (typeof date === 'string') ? date.split('-').map(Number) : null;
+    const targetDate = parts ? new Date(parts[0], parts[1] - 1, parts[2]) : new Date(date.getTime());
+    const day = targetDate.getDay();
+    const diffToMonday = day === 0 ? -6 : 1 - day;
+    
+    const monday = new Date(targetDate.getTime());
+    monday.setDate(monday.getDate() + diffToMonday);
+    
+    const sunday = new Date(monday.getTime());
+    sunday.setDate(sunday.getDate() + 6);
+    
+    return {
+      startDateStr: CONFIG.getKSTDateString(monday),
+      endDateStr: CONFIG.getKSTDateString(sunday),
+      monday,
+      sunday
+    };
+  },
+
+  // 날짜 범위 표기용 (예: 07.27(월) ~ 08.02(일))
+  formatKSTDateRangeDisplay: function(startStr, endStr) {
+    if (!startStr || !endStr) return '';
+    try {
+      const sParts = startStr.split('-');
+      const eParts = endStr.split('-');
+      const sDate = new Date(Number(sParts[0]), Number(sParts[1]) - 1, Number(sParts[2]));
+      const eDate = new Date(Number(eParts[0]), Number(eParts[1]) - 1, Number(eParts[2]));
+      const days = ['일', '월', '화', '수', '목', '금', '토'];
+      
+      return `${sParts[1]}.${sParts[2]}(${days[sDate.getDay()]}) ~ ${eParts[1]}.${eParts[2]}(${days[eDate.getDay()]})`;
+    } catch (e) {
+      return `${startStr} ~ ${endStr}`;
+    }
   }
 };
 

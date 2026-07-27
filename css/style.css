@@ -733,3 +733,148 @@ h3 { font-size: 1.1rem; }
     white-space: nowrap;
   }
 }
+
+/* ==========================================================================
+   Report Mode Segmented Controls & Multi-Period Dashboard Component Styles
+   ========================================================================== */
+.report-segmented-control {
+  display: flex;
+  background: var(--primary-blue-light);
+  padding: 4px;
+  border-radius: 16px;
+  margin-bottom: 16px;
+  gap: 4px;
+  border: 1px solid var(--border-subtle);
+}
+
+.segment-btn {
+  flex: 1;
+  padding: 10px 8px;
+  border: none;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: var(--text-medium);
+  background: transparent;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.segment-btn.active {
+  background: #ffffff;
+  color: var(--primary-blue);
+  box-shadow: 0 4px 12px rgba(47, 111, 237, 0.18);
+  font-weight: 800;
+}
+
+.period-nav-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px solid var(--border-subtle);
+  border-radius: 16px;
+  padding: 10px 16px;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+}
+
+.period-nav-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  border: 1px solid var(--border-subtle);
+  background: #ffffff;
+  color: var(--text-dark);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-weight: 800;
+  font-size: 1.1rem;
+  transition: all 0.2s ease;
+}
+
+.period-nav-btn:hover {
+  background: var(--primary-blue-light);
+  color: var(--primary-blue);
+  border-color: var(--primary-blue);
+}
+
+.period-display-label {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: var(--primary-blue);
+  text-align: center;
+}
+
+.report-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.report-stat-card {
+  background: rgba(255, 255, 255, 0.75);
+  border: 1px solid var(--border-subtle);
+  border-radius: 16px;
+  padding: 14px 12px;
+  text-align: center;
+  transition: transform 0.2s ease;
+}
+
+.report-stat-card:hover {
+  transform: translateY(-2px);
+}
+
+.report-stat-val {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: var(--primary-blue);
+  line-height: 1.2;
+}
+
+.report-stat-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+.report-progress-container {
+  background: rgba(0,0,0,0.06);
+  border-radius: 10px;
+  height: 10px;
+  overflow: hidden;
+  margin-top: 6px;
+}
+
+.report-progress-fill {
+  height: 100%;
+  border-radius: 10px;
+  background: linear-gradient(90deg, #2F6FED 0%, #4D8BF5 100%);
+  transition: width 0.4s ease;
+}
+
+.report-day-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px solid var(--border-subtle);
+  border-radius: 14px;
+  margin-bottom: 10px;
+  transition: all 0.2s ease;
+}
+
+.report-day-item:hover {
+  background: #ffffff;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}

@@ -364,6 +364,295 @@ class UIComponents {
       }
     };
   }
+
+  // ==========================================================================
+  // 기간별(일/주/월) 케어 작성 이력 보고서 전용 렌더러
+  // ==========================================================================
+
+  // 5. 일 단위 보고서 카드 (Daily Report)
+  renderDailyReport(containerId, record, dateStr) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+
+    if (!record) {
+      container.innerHTML = `
+        <div class="glass-card text-center" style="padding: 30px 20px;">
+          <div style="font-size: 2.5rem; margin-bottom: 8px;">📭</div>
+          <h3 style="margin: 0 0 6px 0; color: var(--text-dark);">${CONFIG.formatKSTDateDisplay(dateStr)}</h3>
+          <p class="text-muted" style="margin: 0;">해당 일자에 등록된 케어 작성 기록이 없습니다.</p>
+        </div>
+      `;
+      return;
+    }
+
+    const sysWarnMorning = record.morning_systolic >= CONFIG.THRESHOLDS.HIGH_SYSTOLIC;
+    const sysWarnEvening = record.evening_systolic >= CONFIG.THRESHOLDS.HIGH_SYSTOLIC;
+    const tempWarnMorning = record.morning_temp >= CONFIG.THRESHOLDS.HIGH_TEMP;
+    const tempWarnEvening = record.evening_temp >= CONFIG.THRESHOLDS.HIGH_TEMP;
+
+    const authorBadge = record.updated_role === '가족'
+      ? `<span class="badge badge-blue">👨‍👩‍👧 가족 작성자 (${record.updated_by_name || '가족'})</span>`
+      : `<span class="badge badge-green">🧑‍⚕️ 요양보호사 (${record.updated_by_name || '요양보호사'})</span>`;
+
+    const getMedText = (r) => {
+      const items = [];
+      if (r.medication_morning === 'Y' || r.medication_morning === true) items.push('아침 🌅');
+      if (r.medication_lunch === 'Y' || r.medication_lunch === true) items.push('점심 ☀️');
+      if (r.medication_evening === 'Y' || r.medication_evening === true) items.push('저녁 🌙');
+      return items.length > 0 ? items.join(', ') : '미복용/기록없음';
+    };
+
+    container.innerHTML = `
+      <div class="glass-card" style="padding: 20px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; border-bottom: 1px solid var(--border-subtle); padding-bottom: 10px;">
+          <div>
+            <h3 style="margin: 0; font-size: 1.15rem; color: var(--primary-blue);">${CONFIG.formatKSTDateDisplay(dateStr)} 일일 보고서</h3>
+            <div style="margin-top: 4px;">${authorBadge}</div>
+          </div>
+          <span class="badge badge-blue" style="font-size: 0.9rem; padding: 6px 12px;">컨디션: ${record.condition || '보통'}</span>
+        </div>
+
+        <!-- 바이탈 그리드 -->
+        <div class="report-stat-grid" style="grid-template-columns: 1fr 1fr; margin-bottom: 16px;">
+          <div class="report-stat-card" style="${sysWarnMorning || tempWarnMorning ? 'border: 1px solid var(--alert-red-border); background: var(--alert-red-bg);' : ''}">
+            <div style="font-weight: 700; font-size: 0.85rem; color: var(--text-dark); margin-bottom: 4px;">🌅 아침 체크 (${record.morning_time || '08:30'})</div>
+            <div class="report-stat-val" style="${sysWarnMorning ? 'color: var(--alert-red);' : ''}">${record.morning_systolic || '--'}/${record.morning_diastolic || '--'} <span style="font-size: 0.75rem; font-weight: normal;">mmHg</span></div>
+            <div style="font-size: 0.9rem; font-weight: 700; margin-top: 4px; ${tempWarnMorning ? 'color: var(--alert-red);' : 'color: var(--text-medium);'}">체온: ${record.morning_temp || '--'}℃</div>
+          </div>
+
+          <div class="report-stat-card" style="${sysWarnEvening || tempWarnEvening ? 'border: 1px solid var(--alert-red-border); background: var(--alert-red-bg);' : ''}">
+            <div style="font-weight: 700; font-size: 0.85rem; color: var(--text-dark); margin-bottom: 4px;">🌙 저녁 체크 (${record.evening_time || '18:00'})</div>
+            <div class="report-stat-val" style="${sysWarnEvening ? 'color: var(--alert-red);' : ''}">${record.evening_systolic || '--'}/${record.evening_diastolic || '--'} <span style="font-size: 0.75rem; font-weight: normal;">mmHg</span></div>
+            <div style="font-size: 0.9rem; font-weight: 700; margin-top: 4px; ${tempWarnEvening ? 'color: var(--alert-red);' : 'color: var(--text-medium);'}">체온: ${record.evening_temp || '--'}℃</div>
+          </div>
+        </div>
+
+        <!-- 세부 항목 체크 -->
+        <div style="display: flex; flex-direction: column; gap: 10px; background: rgba(255,255,255,0.7); padding: 14px; border-radius: 14px; border: 1px solid var(--border-subtle);">
+          <div style="display: flex; justify-content: space-between; font-size: 0.92rem;">
+            <span>🍚 <b>식사 상태:</b> ${record.meal_status || '정보없음'}</span>
+            <span class="text-muted" style="font-size: 0.85rem;">${record.meal_memo || ''}</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; font-size: 0.92rem; border-top: 1px dashed var(--border-subtle); padding-top: 8px;">
+            <span>🚽 <b>배변 현황:</b> ${record.stool_count ? `${record.stool_count}회 (${record.stool_type || '보통'})` : '없음/미작성'}</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; font-size: 0.92rem; border-top: 1px dashed var(--border-subtle); padding-top: 8px;">
+            <span>💊 <b>투약 완료:</b> ${getMedText(record)}</span>
+          </div>
+          ${record.medication_memo ? `<div style="font-size: 0.85rem; color: var(--text-medium); background: #F0F4FF; padding: 6px 10px; border-radius: 8px;">"${record.medication_memo}"</div>` : ''}
+          ${record.condition_memo ? `<div style="font-size: 0.85rem; color: var(--text-dark); background: #FFF9E6; padding: 8px 10px; border-radius: 8px; margin-top: 4px;">📝 <b>컨디션 메모:</b> ${record.condition_memo}</div>` : ''}
+        </div>
+      </div>
+    `;
+  }
+
+  // 6. 주 단위 보고서 카드 (Weekly Report)
+  renderWeeklyReport(containerId, records = [], startDateStr, endDateStr) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+
+    const totalDays = 7;
+    const writtenDays = records.length;
+    const completionPct = Math.round((writtenDays / totalDays) * 100);
+
+    // 바이탈 평균 집계
+    let sumMorningSys = 0, sumMorningDia = 0, sumMorningTemp = 0, countMorning = 0;
+    let sumEveningSys = 0, sumEveningDia = 0, sumEveningTemp = 0, countEvening = 0;
+    let medDoneCount = 0;
+    let condGood = 0, condNormal = 0, condLow = 0;
+
+    records.forEach(r => {
+      if (r.morning_systolic) { sumMorningSys += Number(r.morning_systolic); sumMorningDia += Number(r.morning_diastolic); countMorning++; }
+      if (r.morning_temp) { sumMorningTemp += Number(r.morning_temp); }
+      if (r.evening_systolic) { sumEveningSys += Number(r.evening_systolic); sumEveningDia += Number(r.evening_diastolic); countEvening++; }
+      if (r.evening_temp) { sumEveningTemp += Number(r.evening_temp); }
+
+      if (r.medication_morning === 'Y' || r.medication_lunch === 'Y' || r.medication_evening === 'Y' || r.medication_morning === true) {
+        medDoneCount++;
+      }
+
+      if (r.condition === '상') condGood++;
+      else if (r.condition === '하') condLow++;
+      else condNormal++;
+    });
+
+    const avgMorningSys = countMorning > 0 ? Math.round(sumMorningSys / countMorning) : '--';
+    const avgMorningDia = countMorning > 0 ? Math.round(sumMorningDia / countMorning) : '--';
+    const avgMorningTemp = countMorning > 0 ? (sumMorningTemp / countMorning).toFixed(1) : '--';
+
+    const avgEveningSys = countEvening > 0 ? Math.round(sumEveningSys / countEvening) : '--';
+    const avgEveningDia = countEvening > 0 ? Math.round(sumEveningDia / countEvening) : '--';
+    const avgEveningTemp = countEvening > 0 ? (sumEveningTemp / countEvening).toFixed(1) : '--';
+
+    const medPct = writtenDays > 0 ? Math.round((medDoneCount / writtenDays) * 100) : 0;
+
+    // 주간 날짜 리스트 생성 (월~일 7일)
+    const sParts = startDateStr.split('-').map(Number);
+    const startDate = new Date(sParts[0], sParts[1] - 1, sParts[2]);
+
+    let dayListHTML = '';
+    for (let i = 0; i < 7; i++) {
+      const curDate = new Date(startDate.getTime());
+      curDate.setDate(curDate.getDate() + i);
+      const curDateStr = CONFIG.getKSTDateString(curDate);
+      const dayRec = records.find(r => r.date === curDateStr);
+      const dayDisplay = CONFIG.formatKSTDateDisplay(curDateStr);
+
+      let statusBadge = `<span class="badge badge-warning">미작성</span>`;
+      if (dayRec) {
+        let badgeColor = 'badge-blue';
+        if (dayRec.condition === '상') badgeColor = 'badge-green';
+        else if (dayRec.condition === '하') badgeColor = 'badge-red';
+        statusBadge = `<span class="badge ${badgeColor}">${dayRec.condition || '작성완료'}</span>`;
+      }
+
+      dayListHTML += `
+        <div class="report-day-item">
+          <div>
+            <span style="font-weight: 700; color: var(--text-dark); font-size: 0.95rem;">${dayDisplay}</span>
+            <span style="margin-left: 8px;">${statusBadge}</span>
+          </div>
+          <div>
+            ${dayRec ? `<button class="btn btn-secondary" style="width: auto; min-height: 28px; padding: 2px 10px; font-size: 0.78rem;" onclick="app.openDetailModalForDate('${curDateStr}')">상세보기</button>` : '<span class="text-muted" style="font-size: 0.8rem;">기록없음</span>'}
+          </div>
+        </div>
+      `;
+    }
+
+    container.innerHTML = `
+      <div class="glass-card" style="padding: 20px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+          <div>
+            <h3 style="margin: 0; font-size: 1.15rem; color: var(--primary-blue);">주간 케어 리포트</h3>
+            <span class="text-muted" style="font-size: 0.85rem;">${CONFIG.formatKSTDateRangeDisplay(startDateStr, endDateStr)}</span>
+          </div>
+          <span class="badge badge-green" style="font-size: 0.9rem; padding: 6px 12px;">작성률 ${completionPct}% (${writtenDays}/7일)</span>
+        </div>
+
+        <!-- 주간 통계 카드 그리드 -->
+        <div class="report-stat-grid">
+          <div class="report-stat-card">
+            <div class="report-stat-label">🌅 아침 평균 바이탈</div>
+            <div class="report-stat-val">${avgMorningSys}/${avgMorningDia}</div>
+            <div style="font-size: 0.82rem; font-weight: 700; color: var(--text-medium); margin-top: 2px;">${avgMorningTemp}℃</div>
+          </div>
+
+          <div class="report-stat-card">
+            <div class="report-stat-label">🌙 저녁 평균 바이탈</div>
+            <div class="report-stat-val">${avgEveningSys}/${avgEveningDia}</div>
+            <div style="font-size: 0.82rem; font-weight: 700; color: var(--text-medium); margin-top: 2px;">${avgEveningTemp}℃</div>
+          </div>
+
+          <div class="report-stat-card">
+            <div class="report-stat-label">💊 주간 투약 준수율</div>
+            <div class="report-stat-val" style="color: var(--success-green);">${medPct}%</div>
+            <div class="report-progress-container">
+              <div class="report-progress-fill" style="width: ${medPct}%;"></div>
+            </div>
+          </div>
+
+          <div class="report-stat-card">
+            <div class="report-stat-label">😊 컨디션 분포</div>
+            <div style="font-size: 0.85rem; font-weight: 700; margin-top: 6px; display: flex; justify-content: space-around;">
+              <span style="color: #2E7D32;">양호 ${condGood}</span>
+              <span style="color: #E65100;">보통 ${condNormal}</span>
+              <span style="color: #C62828;">저조 ${condLow}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 일별 케어 이력 상세 목록 -->
+        <div style="margin-top: 18px;">
+          <div style="font-weight: 700; font-size: 0.95rem; margin-bottom: 10px; color: var(--text-dark);">📅 주간 일별 작성 이력</div>
+          ${dayListHTML}
+        </div>
+      </div>
+    `;
+  }
+
+  // 7. 월 단위 보고서 카드 (Monthly Report)
+  renderMonthlyReport(containerId, records = [], yearMonthStr) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+
+    const [year, month] = yearMonthStr.split('-').map(Number);
+    const totalDaysInMonth = new Date(year, month, 0).getDate();
+    const writtenCount = records.length;
+    const monthPct = Math.round((writtenCount / totalDaysInMonth) * 100);
+
+    let sumSys = 0, sumDia = 0, sumTemp = 0, validCount = 0;
+    let condGood = 0, condNormal = 0, condLow = 0;
+
+    records.forEach(r => {
+      if (r.morning_systolic) { sumSys += Number(r.morning_systolic); sumDia += Number(r.morning_diastolic); validCount++; }
+      if (r.morning_temp) { sumTemp += Number(r.morning_temp); }
+
+      if (r.condition === '상') condGood++;
+      else if (r.condition === '하') condLow++;
+      else condNormal++;
+    });
+
+    const avgSys = validCount > 0 ? Math.round(sumSys / validCount) : '--';
+    const avgDia = validCount > 0 ? Math.round(sumDia / validCount) : '--';
+    const avgTemp = validCount > 0 ? (sumTemp / validCount).toFixed(1) : '--';
+
+    container.innerHTML = `
+      <div class="glass-card" style="padding: 20px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+          <div>
+            <h3 style="margin: 0; font-size: 1.15rem; color: var(--primary-blue);">${year}년 ${month}월 월간 종합 보고서</h3>
+            <span class="text-muted" style="font-size: 0.85rem;">월간 총 기록 ${writtenCount}일 / ${totalDaysInMonth}일 (${monthPct}%)</span>
+          </div>
+          <span class="badge badge-blue" style="font-size: 0.9rem; padding: 6px 12px;">평균 혈압 ${avgSys}/${avgDia}</span>
+        </div>
+
+        <div class="report-stat-grid" style="grid-template-columns: repeat(3, 1fr); margin-bottom: 18px;">
+          <div class="report-stat-card">
+            <div class="report-stat-label">📝 총 작성일수</div>
+            <div class="report-stat-val">${writtenCount}일</div>
+            <div class="report-progress-container">
+              <div class="report-progress-fill" style="width: ${monthPct}%;"></div>
+            </div>
+          </div>
+
+          <div class="report-stat-card">
+            <div class="report-stat-label">🩺 평균 혈압 / 체온</div>
+            <div class="report-stat-val">${avgSys}/${avgDia}</div>
+            <div style="font-size: 0.82rem; font-weight: 700; color: var(--text-medium); margin-top: 2px;">${avgTemp}℃</div>
+          </div>
+
+          <div class="report-stat-card">
+            <div class="report-stat-label">😊 최다 컨디션</div>
+            <div class="report-stat-val" style="color: #2E7D32;">${condGood >= condNormal && condGood >= condLow ? '양호' : (condNormal >= condLow ? '보통' : '저조')}</div>
+            <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 2px;">양호 ${condGood}회 / 저조 ${condLow}회</div>
+          </div>
+        </div>
+
+        <!-- 월간 달력 & 추이 차트 임베디드 레이아웃 -->
+        <div style="margin-top: 20px;">
+          <div style="font-weight: 700; font-size: 1.05rem; margin-bottom: 10px; color: var(--text-dark);">📆 ${year}년 ${month}월 케어 달력</div>
+          <div id="reportMonthCalendarContainer"></div>
+        </div>
+
+        <div style="margin-top: 24px;">
+          <div style="font-weight: 700; font-size: 1.05rem; margin-bottom: 10px; color: var(--text-dark);">📈 ${year}년 ${month}월 혈압 & 체온 추이 그래프</div>
+          <div class="chart-wrapper">
+            <canvas id="reportMonthTrendCanvas"></canvas>
+          </div>
+        </div>
+      </div>
+    `;
+
+    // 렌더링 직후 달력과 차트 세팅
+    setTimeout(() => {
+      this.renderCalendar('reportMonthCalendarContainer', year, month, records, (dStr, rec) => {
+        if (window.app && window.app.openDetailModalForDate) {
+          window.app.openDetailModalForDate(dStr);
+        }
+      });
+      this.renderTrendChart('reportMonthTrendCanvas', records);
+    }, 50);
+  }
 }
 
 window.uiComponents = new UIComponents();

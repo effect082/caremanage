@@ -6,6 +6,8 @@ class App {
   constructor() {
     this.currentDateStr = CONFIG.getKSTDateString();
     this.currentYearMonth = CONFIG.getKSTYearMonthString();
+    this.reportMode = 'daily';
+    this.reportDateStr = this.currentDateStr;
     this.pinPadController = null;
     this.signupPinPadController = null;
     this.selectedCondition = '상';
@@ -145,11 +147,98 @@ class App {
     if (targetView === 'caregiverWriteView') {
       this.loadCaregiverDashboard();
     } else if (targetView === 'todaySummaryView') {
-      this.loadFamilyDashboard();
+      this.loadReportData();
     } else if (targetView === 'calendarView') {
       this.refreshFamilyCalendar();
     } else if (targetView === 'trendView') {
       this.refreshFamilyTrendChart();
+    }
+  }
+
+  // ==========================================================================
+  // 기간별(일/주/월) 케어 이력 보고서 상태 제어 메서드
+  // ==========================================================================
+
+  // 이력 보고서 모드 선택 (일 / 주 / 월)
+  setReportMode(mode) {
+    this.reportMode = mode;
+    document.querySelectorAll('.report-segmented-control .segment-btn').forEach(btn => {
+      if (btn.getAttribute('data-mode') === mode) {
+        btn.classList.add('active');
+      } else {
+        btn.classList.remove('active');
+      }
+    });
+    this.loadReportData();
+  }
+
+  // 이력 보고서 기간 이동 (이전 / 다음)
+  navigateReportPeriod(direction) {
+    const parts = this.reportDateStr.split('-').map(Number);
+    const dateObj = new Date(parts[0], parts[1] - 1, parts[2]);
+
+    if (this.reportMode === 'daily') {
+      dateObj.setDate(dateObj.getDate() + direction);
+    } else if (this.reportMode === 'weekly') {
+      dateObj.setDate(dateObj.getDate() + (direction * 7));
+    } else if (this.reportMode === 'monthly') {
+      dateObj.setMonth(dateObj.getMonth() + direction);
+    }
+
+    this.reportDateStr = CONFIG.getKSTDateString(dateObj);
+    this.loadReportData();
+  }
+
+  // 이력 보고서 데이터 로드 (SWR 0ms 로컬 캐시 + GAS 백그라운드 동기화)
+  async loadReportData() {
+    const user = store.currentUser;
+    if (!user) return;
+
+    const labelEl = document.getElementById('reportPeriodDisplayLabel');
+
+    if (this.reportMode === 'daily') {
+      if (labelEl) labelEl.textContent = CONFIG.formatKSTDateDisplay(this.reportDateStr);
+
+      const localRec = store.getLocalRecord(user.elder_code, this.reportDateStr);
+      uiComponents.renderDailyReport('careReportContainer', localRec, this.reportDateStr);
+
+      gasApi.getDailyCare(user.elder_code, this.reportDateStr).then(res => {
+        if (res && res.success && res.data) {
+          store.saveLocalRecord(user.elder_code, this.reportDateStr, res.data);
+          uiComponents.renderDailyReport('careReportContainer', res.data, this.reportDateStr);
+        }
+      });
+
+    } else if (this.reportMode === 'weekly') {
+      const { startDateStr, endDateStr } = CONFIG.getKSTWeekRange(this.reportDateStr);
+      if (labelEl) labelEl.textContent = CONFIG.formatKSTDateRangeDisplay(startDateStr, endDateStr);
+
+      const yearMonth = startDateStr.slice(0, 7);
+      const localMonthly = store.getLocalMonthlyRecords(user.elder_code, yearMonth);
+      const filteredLocal = localMonthly.filter(r => r.date >= startDateStr && r.date <= endDateStr);
+
+      uiComponents.renderWeeklyReport('careReportContainer', filteredLocal, startDateStr, endDateStr);
+
+      gasApi.getMonthlyCare(user.elder_code, yearMonth).then(res => {
+        if (res && res.success && res.data) {
+          const filtered = res.data.filter(r => r.date >= startDateStr && r.date <= endDateStr);
+          uiComponents.renderWeeklyReport('careReportContainer', filtered, startDateStr, endDateStr);
+        }
+      });
+
+    } else if (this.reportMode === 'monthly') {
+      const yearMonth = this.reportDateStr.slice(0, 7);
+      const [year, month] = yearMonth.split('-');
+      if (labelEl) labelEl.textContent = `${year}년 ${Number(month)}월 케어 리포트`;
+
+      const localMonthly = store.getLocalMonthlyRecords(user.elder_code, yearMonth);
+      uiComponents.renderMonthlyReport('careReportContainer', localMonthly, yearMonth);
+
+      gasApi.getMonthlyCare(user.elder_code, yearMonth).then(res => {
+        if (res && res.success && res.data) {
+          uiComponents.renderMonthlyReport('careReportContainer', res.data, yearMonth);
+        }
+      });
     }
   }
 
@@ -878,25 +967,7 @@ class App {
     if (!user) return;
 
     this.updateStatusDate(this.currentDateStr);
-
-    // 1단계: 로컬 데이터 즉시 반환
-    const localRec = store.getLocalRecord(user.elder_code, this.currentDateStr);
-    if (localRec) {
-      this.renderFamilySummaryCard(localRec);
-    } else {
-      this.renderFamilySummaryCard(null);
-    }
-
-    // 2단계: 백그라운드 동기화
-    gasApi.getDailyCare(user.elder_code, this.currentDateStr).then(res => {
-      if (res && res.success && res.data) {
-        store.saveLocalRecord(user.elder_code, this.currentDateStr, res.data);
-        this.renderFamilySummaryCard(res.data);
-      } else if (!localRec) {
-        this.renderFamilySummaryCard(null);
-      }
-    });
-
+    this.loadReportData();
     this.refreshFamilyCalendar();
     this.refreshFamilyTrendChart();
   }
