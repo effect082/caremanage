@@ -50,10 +50,8 @@ class Store {
     }
 
     if (!localStorage.getItem(CONFIG.KEYS.LOCAL_RECORDS)) {
-      const todayStr = new Date().toISOString().split('T')[0];
-      const yesterday = new Date();
-      yesterday.setDate(yesterday.getDate() - 1);
-      const yesterdayStr = yesterday.toISOString().split('T')[0];
+      const todayStr = CONFIG.getKSTDateString();
+      const yesterdayStr = CONFIG.getKSTYesterdayString();
 
       const mockRecords = {};
       mockRecords[`ELDER001_${yesterdayStr}`] = {

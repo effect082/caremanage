@@ -4,8 +4,8 @@
 
 class App {
   constructor() {
-    this.currentDateStr = new Date().toISOString().split('T')[0];
-    this.currentYearMonth = this.currentDateStr.slice(0, 7);
+    this.currentDateStr = CONFIG.getKSTDateString();
+    this.currentYearMonth = CONFIG.getKSTYearMonthString();
     this.pinPadController = null;
     this.signupPinPadController = null;
     this.selectedCondition = '상';
@@ -16,6 +16,7 @@ class App {
   init() {
     console.log('App Initializing...');
     this.bindEvents();
+    this.bindDateAutoSync();
     this.initPinPads();
     this.checkAuthAndRender();
   }
@@ -58,8 +59,7 @@ class App {
     if (dashboardSection) dashboardSection.style.display = 'block';
     if (bottomNav) bottomNav.style.display = 'flex';
 
-    const dashDateLabel = document.getElementById('dashDateLabel');
-    if (dashDateLabel) dashDateLabel.textContent = this.currentDateStr;
+    this.updateStatusDate(this.currentDateStr);
 
     // 요양보호사 및 가족 회원 모두 케어 작성 탭 이용 가능 (주말/휴가 가족 직접 입력)
     if (navCaregiverWriteBtn) {
@@ -86,8 +86,50 @@ class App {
     }
   }
 
+  // 대한민국 표준시(KST) 자동 동기화 바인딩
+  bindDateAutoSync() {
+    // 탭 전환/브라우저 복귀 시 자동 감지
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') {
+        this.checkAndUpdateCurrentDate();
+      }
+    });
+
+    window.addEventListener('focus', () => {
+      this.checkAndUpdateCurrentDate();
+    });
+
+    // 1분 간격 자정 넘어감 자동 감지
+    setInterval(() => {
+      this.checkAndUpdateCurrentDate();
+    }, 60000);
+  }
+
+  // 날짜 변경 감지 및 유기적 뷰/데이터 갱신 헬퍼
+  checkAndUpdateCurrentDate() {
+    const latestKSTDate = CONFIG.getKSTDateString();
+    if (this.currentDateStr !== latestKSTDate) {
+      console.log(`[KST Date Auto-Sync] Date changed: ${this.currentDateStr} -> ${latestKSTDate}`);
+      this.currentDateStr = latestKSTDate;
+      this.currentYearMonth = CONFIG.getKSTYearMonthString();
+      this.updateStatusDate(this.currentDateStr);
+
+      if (store.currentUser) {
+        if (store.currentUser.role === '요양보호사') {
+          this.loadCaregiverDashboard();
+        } else {
+          this.loadFamilyDashboard();
+        }
+      }
+      return true;
+    }
+    return false;
+  }
+
   // 뷰 패널 전환 (요양보호사 & 가족 공용)
   switchView(targetView) {
+    this.checkAndUpdateCurrentDate();
+
     document.querySelectorAll('.view-pane').forEach(pane => pane.style.display = 'none');
     const activePane = document.getElementById(targetView);
     if (activePane) activePane.style.display = 'block';
@@ -470,9 +512,10 @@ class App {
 
   // 대시보드 날짜 및 상태 뱃지 안전 갱신 헬퍼
   updateStatusDate(dateStr) {
+    const formatted = CONFIG.formatKSTDateDisplay(dateStr);
     ['dashDateLabel', 'careDateLabel', 'familyDateLabel'].forEach(id => {
       const el = document.getElementById(id);
-      if (el) el.textContent = dateStr;
+      if (el) el.textContent = formatted;
     });
   }
 

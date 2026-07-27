@@ -314,17 +314,21 @@ function createJsonResponse(data) {
     .setMimeType(ContentService.MimeType.JSON);
 }
 
-// Helper: 날짜 포맷 YYYY-MM-DD
+// Helper: 날짜 포맷 YYYY-MM-DD (대한민국 표준시 Asia/Seoul 타임존 고정)
 function formatDate(d) {
   if (!d) return '';
   if (typeof d === 'string') return d.slice(0, 10);
   try {
-    var year = d.getFullYear();
-    var month = String(d.getMonth() + 1).padStart(2, '0');
-    var day = String(d.getDate()).padStart(2, '0');
-    return year + '-' + month + '-' + day;
+    return Utilities.formatDate(new Date(d), 'Asia/Seoul', 'yyyy-MM-dd');
   } catch (e) {
-    return String(d).slice(0, 10);
+    try {
+      var year = d.getFullYear();
+      var month = String(d.getMonth() + 1).padStart(2, '0');
+      var day = String(d.getDate()).padStart(2, '0');
+      return year + '-' + month + '-' + day;
+    } catch (e2) {
+      return String(d).slice(0, 10);
+    }
   }
 }
 
