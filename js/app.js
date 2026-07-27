@@ -173,7 +173,7 @@ class App {
   // 이력 보고서 모드 선택 (일 / 주 / 월)
   setReportMode(mode) {
     this.reportMode = mode;
-    document.querySelectorAll('.report-segmented-control .segment-btn').forEach(btn => {
+    document.querySelectorAll('.report-tab-btn').forEach(btn => {
       if (btn.getAttribute('data-mode') === mode) {
         btn.classList.add('active');
       } else {

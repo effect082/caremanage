@@ -737,76 +737,52 @@ h3 { font-size: 1.1rem; }
 /* ==========================================================================
    Responsive Professional Report System (Desktop, Tablet, Mobile)
    ========================================================================== */
-.report-main-card {
-  padding: 24px;
-  max-width: 900px;
-  margin: 0 auto 24px auto;
-  border-radius: var(--border-radius-lg);
-  box-shadow: 0 16px 40px rgba(47, 111, 237, 0.08);
-}
-
-.report-header-wrapper {
+.report-tab-switcher {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 16px;
-  padding-bottom: 18px;
-  border-bottom: 1px solid var(--border-subtle);
-  margin-bottom: 20px;
-}
-
-.report-title-box {
-  flex: 1;
-  min-width: 220px;
-}
-
-/* Segmented Control Switcher */
-.report-segmented-control {
-  display: inline-flex;
-  background: var(--primary-blue-light);
+  background: rgba(47, 111, 237, 0.08);
   padding: 5px;
-  border-radius: 16px;
+  border-radius: 18px;
   border: 1px solid rgba(47, 111, 237, 0.15);
-  box-shadow: inset 0 2px 4px rgba(0,0,0,0.03);
-  gap: 4px;
+  margin-bottom: 20px;
+  gap: 6px;
+  width: 100%;
 }
 
-.segment-btn {
+.report-tab-btn {
   -webkit-appearance: none !important;
+  -moz-appearance: none !important;
   appearance: none !important;
   outline: none !important;
   border: none !important;
-  background: transparent;
-  padding: 10px 18px;
-  border-radius: 12px;
+  flex: 1;
+  padding: 12px 16px;
+  border-radius: 14px;
   font-family: inherit;
-  font-size: 0.92rem;
+  font-size: 0.95rem;
   font-weight: 700;
   color: var(--text-medium);
+  background: transparent;
   cursor: pointer;
   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  gap: 8px;
   white-space: nowrap;
 }
 
-.segment-btn:hover {
+.report-tab-btn:hover {
   color: var(--primary-blue);
-  background: rgba(255, 255, 255, 0.5);
+  background: rgba(255, 255, 255, 0.6);
 }
 
-.segment-btn.active {
-  background: #ffffff !important;
-  color: var(--primary-blue) !important;
-  box-shadow: 0 4px 14px rgba(47, 111, 237, 0.22) !important;
+.report-tab-btn.active {
+  background: var(--primary-blue) !important;
+  color: #ffffff !important;
+  box-shadow: 0 6px 20px rgba(47, 111, 237, 0.3) !important;
   font-weight: 800 !important;
-  transform: translateY(-1px);
 }
 
-/* Period Navigation Toolbar */
 .period-nav-toolbar {
   display: flex;
   align-items: center;
@@ -814,49 +790,23 @@ h3 { font-size: 1.1rem; }
   background: rgba(255, 255, 255, 0.9);
   border: 1px solid var(--border-subtle);
   border-radius: 16px;
-  padding: 12px 20px;
-  margin-bottom: 24px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.03);
-}
-
-.period-nav-btn {
-  -webkit-appearance: none !important;
-  appearance: none !important;
-  outline: none !important;
-  width: 40px;
-  height: 40px;
-  border-radius: 12px;
-  border: 1px solid var(--border-subtle) !important;
-  background: #ffffff !important;
-  color: var(--primary-blue);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.04);
-}
-
-.period-nav-btn:hover {
-  background: var(--primary-blue) !important;
-  color: #ffffff !important;
-  border-color: var(--primary-blue) !important;
-  transform: scale(1.05);
+  padding: 10px 16px;
+  margin-bottom: 20px;
+  gap: 12px;
 }
 
 .period-label-wrapper {
   display: flex;
   align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
+  gap: 10px;
   justify-content: center;
+  flex-wrap: wrap;
 }
 
 .period-display-label {
   font-size: 1.15rem;
   font-weight: 800;
-  color: var(--text-dark);
-  letter-spacing: -0.3px;
+  color: var(--primary-blue);
 }
 
 .today-reset-btn {
@@ -868,7 +818,7 @@ h3 { font-size: 1.1rem; }
   color: var(--primary-blue) !important;
   padding: 4px 12px;
   border-radius: 20px;
-  font-size: 0.78rem;
+  font-size: 0.8rem;
   font-weight: 700;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -879,7 +829,6 @@ h3 { font-size: 1.1rem; }
   color: #ffffff !important;
 }
 
-/* Report Stat Grid & Cards (Responsive 4-col -> 2-col -> 1-col) */
 .report-stat-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -888,13 +837,12 @@ h3 { font-size: 1.1rem; }
 }
 
 .report-stat-card {
-  background: rgba(255, 255, 255, 0.8);
+  background: rgba(255, 255, 255, 0.85);
   border: 1px solid var(--border-subtle);
   border-radius: 16px;
   padding: 16px 14px;
   text-align: center;
   transition: all 0.2s ease;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.02);
 }
 
 .report-stat-card:hover {
@@ -956,24 +904,17 @@ h3 { font-size: 1.1rem; }
 }
 
 @media (max-width: 540px) {
-  .report-main-card {
-    padding: 16px 12px;
-  }
-  .report-header-wrapper {
+  .report-tab-switcher {
     flex-direction: column;
-    align-items: stretch;
-    gap: 12px;
+    gap: 4px;
   }
-  .report-segmented-control {
+  .report-tab-btn {
     width: 100%;
-  }
-  .segment-btn {
-    flex: 1;
-    padding: 9px 4px;
-    font-size: 0.84rem;
+    padding: 10px;
+    font-size: 0.88rem;
   }
   .period-nav-toolbar {
-    padding: 10px 10px;
+    padding: 8px 10px;
   }
   .period-display-label {
     font-size: 0.95rem;
