@@ -206,18 +206,8 @@ class UIComponents {
         </div>
       `;
     } else {
-      const formatTime = (t) => {
-        if (!t) return '시간미입력';
-        const str = String(t);
-        if (str.includes('T')) {
-          const timePart = str.split('T')[1];
-          if (timePart) {
-            const parts = timePart.split(':');
-            return `${parts[0]}:${parts[1]}`;
-          }
-        }
-        return str;
-      };
+      const formatTime = (t) => CONFIG.formatKSTTime(t, '시간미입력');
+      const cleanMedMemo = CONFIG.cleanMedicationMemo(record.medication_memo);
 
       const getTempBadge = (t) => {
         if (!t) return '-';
@@ -307,7 +297,7 @@ class UIComponents {
               <span style="font-weight: 600;">💊 투약 체크:</span>
               <span style="font-weight: 700; color: var(--primary-blue); font-size: 0.88rem;">${getMedBadge(record)}</span>
             </div>
-            ${record.medication_memo ? `<p style="font-size: 0.9rem; color: var(--text-medium); background: #F4F7FF; padding: 8px 12px; border-radius: 8px; margin-top: 6px;">"${record.medication_memo}"</p>` : ''}
+            ${cleanMedMemo ? `<p style="font-size: 0.9rem; color: var(--text-medium); background: #F4F7FF; padding: 8px 12px; border-radius: 8px; margin-top: 6px;">"${cleanMedMemo}"</p>` : ''}
           </div>
         </div>
       `;
@@ -393,6 +383,10 @@ class UIComponents {
     const tempWarnMorning = record.morning_temp >= CONFIG.THRESHOLDS.HIGH_TEMP;
     const tempWarnEvening = record.evening_temp >= CONFIG.THRESHOLDS.HIGH_TEMP;
 
+    const morningTimeDisplay = CONFIG.formatKSTTime(record.morning_time, '08:30');
+    const eveningTimeDisplay = CONFIG.formatKSTTime(record.evening_time, '18:00');
+    const cleanMedMemo = CONFIG.cleanMedicationMemo(record.medication_memo);
+
     const authorBadge = record.updated_role === '가족'
       ? `<span class="badge badge-blue">👨‍👩‍👧 가족 작성자 (${record.updated_by_name || '가족'})</span>`
       : `<span class="badge badge-green">🧑‍⚕️ 요양보호사 (${record.updated_by_name || '요양보호사'})</span>`;
@@ -418,13 +412,13 @@ class UIComponents {
         <!-- 바이탈 그리드 -->
         <div class="report-stat-grid" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); margin-bottom: 18px;">
           <div class="report-stat-card" style="${sysWarnMorning || tempWarnMorning ? 'border: 1px solid var(--alert-red-border); background: var(--alert-red-bg);' : ''}">
-            <div style="font-weight: 700; font-size: 0.88rem; color: var(--text-dark); margin-bottom: 6px;">🌅 아침 체크 (${record.morning_time || '08:30'})</div>
+            <div style="font-weight: 700; font-size: 0.88rem; color: var(--text-dark); margin-bottom: 6px;">🌅 아침 체크 (${morningTimeDisplay})</div>
             <div class="report-stat-val" style="${sysWarnMorning ? 'color: var(--alert-red);' : ''}">${record.morning_systolic || '--'}/${record.morning_diastolic || '--'} <span style="font-size: 0.75rem; font-weight: normal;">mmHg</span></div>
             <div style="font-size: 0.92rem; font-weight: 700; margin-top: 6px; ${tempWarnMorning ? 'color: var(--alert-red);' : 'color: var(--text-medium);'}">체온: ${record.morning_temp || '--'}℃</div>
           </div>
 
           <div class="report-stat-card" style="${sysWarnEvening || tempWarnEvening ? 'border: 1px solid var(--alert-red-border); background: var(--alert-red-bg);' : ''}">
-            <div style="font-weight: 700; font-size: 0.88rem; color: var(--text-dark); margin-bottom: 6px;">🌙 저녁 체크 (${record.evening_time || '18:00'})</div>
+            <div style="font-weight: 700; font-size: 0.88rem; color: var(--text-dark); margin-bottom: 6px;">🌙 저녁 체크 (${eveningTimeDisplay})</div>
             <div class="report-stat-val" style="${sysWarnEvening ? 'color: var(--alert-red);' : ''}">${record.evening_systolic || '--'}/${record.evening_diastolic || '--'} <span style="font-size: 0.75rem; font-weight: normal;">mmHg</span></div>
             <div style="font-size: 0.92rem; font-weight: 700; margin-top: 6px; ${tempWarnEvening ? 'color: var(--alert-red);' : 'color: var(--text-medium);'}">체온: ${record.evening_temp || '--'}℃</div>
           </div>
@@ -442,7 +436,7 @@ class UIComponents {
           <div style="display: flex; justify-content: space-between; font-size: 0.95rem; border-top: 1px dashed var(--border-subtle); padding-top: 10px; align-items: center;">
             <span>💊 <b>투약 완료:</b> ${getMedText(record)}</span>
           </div>
-          ${record.medication_memo ? `<div style="font-size: 0.88rem; color: var(--text-medium); background: #F0F4FF; padding: 8px 12px; border-radius: 10px; border: 1px solid rgba(47,111,237,0.15);">" ${record.medication_memo} "</div>` : ''}
+          ${cleanMedMemo ? `<div style="font-size: 0.88rem; color: var(--text-medium); background: #F0F4FF; padding: 8px 12px; border-radius: 10px; border: 1px solid rgba(47,111,237,0.15);">" ${cleanMedMemo} "</div>` : ''}
           ${record.condition_memo ? `<div style="font-size: 0.88rem; color: var(--text-dark); background: #FFF9E6; padding: 10px 12px; border-radius: 10px; border: 1px solid rgba(245,158,11,0.2); margin-top: 4px;">📝 <b>컨디션 메모:</b> ${record.condition_memo}</div>` : ''}
         </div>
       </div>

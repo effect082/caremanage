@@ -666,12 +666,12 @@ class App {
     if (d.morning_systolic) { const el = document.getElementById('morningSys'); if (el) el.value = d.morning_systolic; }
     if (d.morning_diastolic) { const el = document.getElementById('morningDia'); if (el) el.value = d.morning_diastolic; }
     if (d.morning_temp) { const el = document.getElementById('morningTemp'); if (el) el.value = d.morning_temp; }
-    if (d.morning_time) { const el = document.getElementById('morningTime'); if (el) el.value = d.morning_time; }
+    if (d.morning_time) { const el = document.getElementById('morningTime'); if (el) el.value = CONFIG.formatKSTTime(d.morning_time, ''); }
 
     if (d.evening_systolic) { const el = document.getElementById('eveningSys'); if (el) el.value = d.evening_systolic; }
     if (d.evening_diastolic) { const el = document.getElementById('eveningDia'); if (el) el.value = d.evening_diastolic; }
     if (d.evening_temp) { const el = document.getElementById('eveningTemp'); if (el) el.value = d.evening_temp; }
-    if (d.evening_time) { const el = document.getElementById('eveningTime'); if (el) el.value = d.evening_time; }
+    if (d.evening_time) { const el = document.getElementById('eveningTime'); if (el) el.value = CONFIG.formatKSTTime(d.evening_time, ''); }
 
     if (d.condition_memo) { const el = document.getElementById('conditionMemo'); if (el) el.value = d.condition_memo; }
     if (d.meal_memo) { const el = document.getElementById('mealMemo'); if (el) el.value = d.meal_memo; }
@@ -716,7 +716,7 @@ class App {
       else medEveningChip.classList.remove('selected');
     }
     if (medMemoEl && d.medication_memo !== undefined) {
-      medMemoEl.value = d.medication_memo;
+      medMemoEl.value = CONFIG.cleanMedicationMemo(d.medication_memo);
     }
 
     this.validateHealthInputs();
@@ -946,12 +946,12 @@ class App {
       morning_systolic: (morningSysEl && morningSysEl.value !== '') ? parseFloat(morningSysEl.value) : (existingRec.morning_systolic || null),
       morning_diastolic: (morningDiaEl && morningDiaEl.value !== '') ? parseFloat(morningDiaEl.value) : (existingRec.morning_diastolic || null),
       morning_temp: (morningTempEl && morningTempEl.value !== '') ? parseFloat(morningTempEl.value) : (existingRec.morning_temp || null),
-      morning_time: (morningTimeEl && morningTimeEl.value !== '') ? morningTimeEl.value : (existingRec.morning_time || ''),
+      morning_time: (morningTimeEl && morningTimeEl.value !== '') ? CONFIG.formatKSTTime(morningTimeEl.value, '') : (existingRec.morning_time ? CONFIG.formatKSTTime(existingRec.morning_time, '') : ''),
 
       evening_systolic: (eveningSysEl && eveningSysEl.value !== '') ? parseFloat(eveningSysEl.value) : (existingRec.evening_systolic || null),
       evening_diastolic: (eveningDiaEl && eveningDiaEl.value !== '') ? parseFloat(eveningDiaEl.value) : (existingRec.evening_diastolic || null),
       evening_temp: (eveningTempEl && eveningTempEl.value !== '') ? parseFloat(eveningTempEl.value) : (existingRec.evening_temp || null),
-      evening_time: (eveningTimeEl && eveningTimeEl.value !== '') ? eveningTimeEl.value : (existingRec.evening_time || ''),
+      evening_time: (eveningTimeEl && eveningTimeEl.value !== '') ? CONFIG.formatKSTTime(eveningTimeEl.value, '') : (existingRec.evening_time ? CONFIG.formatKSTTime(existingRec.evening_time, '') : ''),
 
       condition: this.selectedCondition || existingRec.condition || '상 (양호)',
       condition_memo: (conditionMemoEl && conditionMemoEl.value.trim() !== '') ? conditionMemoEl.value.trim() : (existingRec.condition_memo || ''),
@@ -964,7 +964,7 @@ class App {
       medication_morning: medMorningChip ? medMorningChip.classList.contains('selected') : (existingRec.medication_morning || false),
       medication_lunch: medLunchChip ? medLunchChip.classList.contains('selected') : (existingRec.medication_lunch || false),
       medication_evening: medEveningChip ? medEveningChip.classList.contains('selected') : (existingRec.medication_evening || false),
-      medication_memo: (medMemoEl && medMemoEl.value.trim() !== '') ? medMemoEl.value.trim() : (existingRec.medication_memo || ''),
+      medication_memo: medMemoEl ? CONFIG.cleanMedicationMemo(medMemoEl.value) : CONFIG.cleanMedicationMemo(existingRec.medication_memo || ''),
 
       updated_by: user.user_id,
       updated_by_name: user.name,

@@ -99,6 +99,58 @@ const CONFIG = {
     } catch (e) {
       return `${startStr} ~ ${endStr}`;
     }
+  },
+
+  // 대한민국 표준시(KST) 시간 표기용 (예: 05:28, 22:12, 1899-12-29T23:30:08.000Z -> 08:30)
+  formatKSTTime: function(timeStr, defaultFallback = '') {
+    if (!timeStr) return defaultFallback;
+    const str = String(timeStr).trim();
+    if (!str) return defaultFallback;
+
+    // 이미 HH:mm 또는 HH:mm:ss 형식인 경우
+    if (/^\d{1,2}:\d{2}(:\d{2})?$/.test(str)) {
+      const parts = str.split(':');
+      const h = String(parts[0]).padStart(2, '0');
+      const m = String(parts[1]).padStart(2, '0');
+      return `${h}:${m}`;
+    }
+
+    // ISO 날짜 또는 Google Sheets Time 셀 변환 ISO 문자열인 경우 (T 포함)
+    if (str.includes('T')) {
+      const timePart = str.split('T')[1];
+      if (timePart) {
+        const parts = timePart.split(':');
+        if (parts.length >= 2) {
+          let h = parseInt(parts[0], 10);
+          let m = parseInt(parts[1], 10);
+          if (str.endsWith('Z') || str.includes('+')) {
+            h = (h + 9) % 24;
+          }
+          return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+        }
+      }
+    }
+
+    try {
+      const d = new Date(str);
+      if (!isNaN(d.getTime())) {
+        const kstHours = (d.getUTCHours() + 9) % 24;
+        const kstMinutes = d.getUTCMinutes();
+        return `${String(kstHours).padStart(2, '0')}:${String(kstMinutes).padStart(2, '0')}`;
+      }
+    } catch (e) {}
+
+    return str || defaultFallback;
+  },
+
+  // 투약 메모 정화 (요청사항: "복용하시는 약 4개중 3가지 70%만 복용(보호자요청)" 문구 필터링)
+  cleanMedicationMemo: function(memo) {
+    if (!memo) return '';
+    const str = String(memo).trim();
+    if (str.includes('복용하시는 약 4개중') || str.includes('70%만 복용')) {
+      return '';
+    }
+    return str;
   }
 };
 

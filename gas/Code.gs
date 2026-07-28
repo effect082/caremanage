@@ -189,7 +189,16 @@ function handleGetDailyCare(ss, p) {
     if (elderCode === p.elder_code && dateStr === p.date) {
       var obj = {};
       for (var h = 0; h < headers.length; h++) {
-        obj[headers[h]] = headers[h] === 'date' ? formatDate(row[h]) : row[h];
+        var hName = headers[h];
+        if (hName === 'date') {
+          obj[hName] = formatDate(row[h]);
+        } else if (hName === 'morning_time' || hName === 'evening_time') {
+          obj[hName] = formatTimeVal(row[h]);
+        } else if (hName === 'medication_memo') {
+          obj[hName] = cleanMedicationMemoVal(row[h]);
+        } else {
+          obj[hName] = row[h];
+        }
       }
       var respObj = { success: true, data: obj };
       cache.put(cacheKey, JSON.stringify(respObj), 300);
@@ -296,7 +305,16 @@ function handleGetMonthlyCare(ss, p) {
       if (eCode === p.elder_code && dStr.indexOf(p.month) === 0) {
         var obj = {};
         for (var h = 0; h < headers.length; h++) {
-          obj[headers[h]] = headers[h] === 'date' ? formatDate(row[h]) : row[h];
+          var hName = headers[h];
+          if (hName === 'date') {
+            obj[hName] = formatDate(row[h]);
+          } else if (hName === 'morning_time' || hName === 'evening_time') {
+            obj[hName] = formatTimeVal(row[h]);
+          } else if (hName === 'medication_memo') {
+            obj[hName] = cleanMedicationMemoVal(row[h]);
+          } else {
+            obj[hName] = row[h];
+          }
         }
         results.push(obj);
       }
@@ -330,6 +348,38 @@ function formatDate(d) {
       return String(d).slice(0, 10);
     }
   }
+}
+
+// Helper: 시간 포맷 HH:mm (대한민국 표준시 Asia/Seoul 타임존 고정)
+function formatTimeVal(t) {
+  if (!t) return '';
+  var str = String(t).trim();
+  if (!str) return '';
+  if (/^\d{1,2}:\d{2}(:\d{2})?$/.test(str)) {
+    var p = str.split(':');
+    var h = p[0].length === 1 ? '0' + p[0] : p[0];
+    var m = p[1].length === 1 ? '0' + p[1] : p[1];
+    return h + ':' + m;
+  }
+  try {
+    var d = new Date(str);
+    if (!isNaN(d.getTime())) {
+      var kstH = (d.getUTCHours() + 9) % 24;
+      var kstM = d.getUTCMinutes();
+      return (kstH < 10 ? '0' + kstH : '' + kstH) + ':' + (kstM < 10 ? '0' + kstM : '' + kstM);
+    }
+  } catch (e) {}
+  return str;
+}
+
+// Helper: 투약 메모 필터링
+function cleanMedicationMemoVal(memo) {
+  if (!memo) return '';
+  var str = String(memo).trim();
+  if (str.indexOf('복용하시는 약 4개중') !== -1 || str.indexOf('70%만 복용') !== -1) {
+    return '';
+  }
+  return str;
 }
 
 // Helper: 필수 시트 및 25개 헤더 자동 생성/동기화
