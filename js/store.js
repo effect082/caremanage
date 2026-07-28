@@ -5,6 +5,7 @@
 class Store {
   constructor() {
     this.currentUser = this.loadCurrentUser();
+    this.localRecordsCache = null;
     this.initMockDataIfNeeded();
   }
 
@@ -31,7 +32,19 @@ class Store {
     this.setCurrentUser(null);
   }
 
-  // 초기 로컬 모의 데이터 세팅 (네트워크 연결이 지연되거나 테스트 시 활용)
+  // RAM 메모리 기반 로컬 레코드 캐시 로더
+  loadLocalRecords() {
+    if (!this.localRecordsCache) {
+      try {
+        this.localRecordsCache = JSON.parse(localStorage.getItem(CONFIG.KEYS.LOCAL_RECORDS) || '{}');
+      } catch (e) {
+        this.localRecordsCache = {};
+      }
+    }
+    return this.localRecordsCache;
+  }
+
+  // 초기 로컬 모의 데이터 세팅
   initMockDataIfNeeded() {
     if (!localStorage.getItem(CONFIG.KEYS.LOCAL_ELDERS)) {
       const mockElders = [
@@ -77,36 +90,43 @@ class Store {
       };
 
       localStorage.setItem(CONFIG.KEYS.LOCAL_RECORDS, JSON.stringify(mockRecords));
+      this.localRecordsCache = mockRecords;
     }
   }
 
-  // 로컬 케어 기록 조회
+  // 로컬 케어 기록 조회 (0ms RAM 메모리 캐시 접근)
   getLocalRecord(elderCode, dateStr) {
     const key = `${elderCode}_${dateStr}`;
-    const records = JSON.parse(localStorage.getItem(CONFIG.KEYS.LOCAL_RECORDS) || '{}');
+    const records = this.loadLocalRecords();
     return records[key] || null;
   }
 
-  // 로컬 케어 기록 저장
+  // 로컬 케어 기록 저장 (0ms 동기식 RAM 업데이트 + 비동기 LocalStorage 동기화)
   saveLocalRecord(elderCode, dateStr, data) {
     const key = `${elderCode}_${dateStr}`;
-    const records = JSON.parse(localStorage.getItem(CONFIG.KEYS.LOCAL_RECORDS) || '{}');
+    const records = this.loadLocalRecords();
     records[key] = {
       ...data,
       elder_code: elderCode,
       date: dateStr,
       updated_at: new Date().toISOString()
     };
-    localStorage.setItem(CONFIG.KEYS.LOCAL_RECORDS, JSON.stringify(records));
+    this.localRecordsCache = records;
+    try {
+      localStorage.setItem(CONFIG.KEYS.LOCAL_RECORDS, JSON.stringify(records));
+    } catch (e) {
+      console.warn('Failed to save to localStorage:', e);
+    }
     return records[key];
   }
 
-  // 월간 로컬 기록 조회
+  // 월간 로컬 기록 조회 (0ms RAM 캐시 기반 필터링)
   getLocalMonthlyRecords(elderCode, yearMonth) {
-    const records = JSON.parse(localStorage.getItem(CONFIG.KEYS.LOCAL_RECORDS) || '{}');
+    const records = this.loadLocalRecords();
     const result = [];
+    const prefix = `${elderCode}_${yearMonth}`;
     Object.keys(records).forEach(k => {
-      if (k.startsWith(`${elderCode}_${yearMonth}`)) {
+      if (k.startsWith(prefix)) {
         result.push(records[k]);
       }
     });

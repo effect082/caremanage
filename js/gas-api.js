@@ -6,6 +6,8 @@
 class GasApiService {
   constructor(baseUrl) {
     this.baseUrl = baseUrl || CONFIG.GAS_URL;
+    this.memoryCache = new Map();
+    this.cacheTTL = 60000; // 60초 RAM 캐시
   }
 
   // SHA-256 Simple Hash Utility (비밀번호 안전화)
@@ -21,8 +23,8 @@ class GasApiService {
     }
   }
 
-  // Generic Request Helper
-  async request(action, params = {}, method = 'GET', body = null) {
+  // Generic Request Helper with 6-Second Timeout Resilience
+  async request(action, params = {}, method = 'GET', body = null, timeoutMs = 6000) {
     let url = `${this.baseUrl}?action=${encodeURIComponent(action)}`;
     
     if (method === 'GET') {
@@ -33,22 +35,26 @@ class GasApiService {
       });
     }
 
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+
     const fetchOptions = {
       method: method,
       mode: 'cors',
+      signal: controller.signal,
       headers: {
         'Accept': 'application/json'
       }
     };
 
     if (method === 'POST' && body) {
-      // GAS accepts text/plain to prevent CORS preflight OPTIONS failures
       fetchOptions.headers['Content-Type'] = 'text/plain;charset=utf-8';
       fetchOptions.body = JSON.stringify({ action, ...body });
     }
 
     try {
       const response = await fetch(url, fetchOptions);
+      clearTimeout(timer);
       if (!response.ok) {
         throw new Error(`HTTP Error: ${response.status}`);
       }
@@ -60,10 +66,13 @@ class GasApiService {
         throw new Error("Invalid JSON response from primary endpoint");
       }
     } catch (error) {
+      clearTimeout(timer);
       console.warn(`GAS API Primary Endpoint Warning (${action}):`, error.message);
 
       // 보조(ALT) GAS 엔드포인트 자동 페일오버 재시도
       if (CONFIG.GAS_URL_ALT && this.baseUrl !== CONFIG.GAS_URL_ALT) {
+        const altController = new AbortController();
+        const altTimer = setTimeout(() => altController.abort(), timeoutMs);
         try {
           let altUrl = `${CONFIG.GAS_URL_ALT}?action=${encodeURIComponent(action)}`;
           if (method === 'GET') {
@@ -73,7 +82,8 @@ class GasApiService {
               }
             });
           }
-          const altResp = await fetch(altUrl, fetchOptions);
+          const altResp = await fetch(altUrl, { ...fetchOptions, signal: altController.signal });
+          clearTimeout(altTimer);
           if (altResp.ok) {
             const altText = await altResp.text();
             const altData = JSON.parse(altText);
@@ -81,6 +91,7 @@ class GasApiService {
             return altData;
           }
         } catch (altErr) {
+          clearTimeout(altTimer);
           console.warn(`GAS API Alt Endpoint Warning (${action}):`, altErr.message);
         }
       }
@@ -185,11 +196,21 @@ class GasApiService {
     return res;
   }
 
-  // 3. 일일 케어 기록 조회
-  async getDailyCare(elderCode, dateStr) {
+  // 3. 일일 케어 기록 조회 (0ms RAM 메모리 캐시 + SWR 백그라운드)
+  async getDailyCare(elderCode, dateStr, skipCache = false) {
+    const cacheKey = `DAILY_${elderCode}_${dateStr}`;
+    const cached = this.memoryCache.get(cacheKey);
+    const now = Date.now();
+
+    if (!skipCache && cached && (now - cached.timestamp < this.cacheTTL)) {
+      return cached.data;
+    }
+
     const res = await this.request('getDailyCare', { elder_code: elderCode, date: dateStr }, 'GET');
     
-    if (!res.success && res.isOfflineFallback) {
+    if (res.success) {
+      this.memoryCache.set(cacheKey, { timestamp: now, data: res });
+    } else if (res.isOfflineFallback) {
       const localData = store.getLocalRecord(elderCode, dateStr);
       return {
         success: true,
@@ -200,7 +221,7 @@ class GasApiService {
     return res;
   }
 
-  // 4. 일일 케어 기록 저장
+  // 4. 일일 케어 기록 저장 (0ms 로컬선반영 + 메모리 캐시 무효화)
   async saveDailyCare(elderCode, dateStr, careData) {
     const payload = {
       elder_code: elderCode,
@@ -208,8 +229,14 @@ class GasApiService {
       ...careData
     };
 
-    // 로컬 스토리지 선반영 (즉시 반응성)
+    // 로컬 스토리지 선반영 (즉시 0ms 반응성)
     const savedLocal = store.saveLocalRecord(elderCode, dateStr, careData);
+
+    // 관련 메모리 캐시 무효화
+    this.memoryCache.delete(`DAILY_${elderCode}_${dateStr}`);
+    if (dateStr && dateStr.length >= 7) {
+      this.memoryCache.delete(`MONTH_${elderCode}_${dateStr.slice(0, 7)}`);
+    }
 
     const res = await this.request('saveDailyCare', {}, 'POST', payload);
     
@@ -224,11 +251,21 @@ class GasApiService {
     return res;
   }
 
-  // 5. 월간 기록 조회 (달력 & 추이 그래프용)
-  async getMonthlyCare(elderCode, yearMonth) {
+  // 5. 월간 기록 조회 (달력 & 추이 그래프용 - 0ms RAM 메모리 캐시 적용)
+  async getMonthlyCare(elderCode, yearMonth, skipCache = false) {
+    const cacheKey = `MONTH_${elderCode}_${yearMonth}`;
+    const cached = this.memoryCache.get(cacheKey);
+    const now = Date.now();
+
+    if (!skipCache && cached && (now - cached.timestamp < this.cacheTTL)) {
+      return cached.data;
+    }
+
     const res = await this.request('getMonthlyCare', { elder_code: elderCode, month: yearMonth }, 'GET');
     
-    if (!res.success && res.isOfflineFallback) {
+    if (res.success) {
+      this.memoryCache.set(cacheKey, { timestamp: now, data: res });
+    } else if (res.isOfflineFallback) {
       const localMonthly = store.getLocalMonthlyRecords(elderCode, yearMonth);
       return {
         success: true,

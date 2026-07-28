@@ -29,19 +29,34 @@ class UIComponents {
     const eveningDiastolic = sortedRecords.map(r => r.evening_diastolic || null);
     const eveningTemp = sortedRecords.map(r => r.evening_temp || null);
 
+    const labelsArr = labels.length > 0 ? labels : ['기록 없음'];
+    const morningSysArr = morningSystolic.length > 0 ? morningSystolic : [0];
+    const eveningSysArr = eveningSystolic.length > 0 ? eveningSystolic : [0];
+    const morningTempArr = morningTemp.length > 0 ? morningTemp : [0];
+
+    if (this.chartInstance && this.chartInstance.ctx && this.chartInstance.canvas === canvas) {
+      this.chartInstance.data.labels = labelsArr;
+      this.chartInstance.data.datasets[0].data = morningSysArr;
+      this.chartInstance.data.datasets[1].data = eveningSysArr;
+      this.chartInstance.data.datasets[2].data = morningTempArr;
+      this.chartInstance.update('none');
+      return;
+    }
+
     if (this.chartInstance) {
       this.chartInstance.destroy();
+      this.chartInstance = null;
     }
 
     const ctx = canvas.getContext('2d');
     this.chartInstance = new Chart(ctx, {
       type: 'line',
       data: {
-        labels: labels.length > 0 ? labels : ['기록 없음'],
+        labels: labelsArr,
         datasets: [
           {
             label: '아침 수축기(mmHg)',
-            data: morningSystolic.length > 0 ? morningSystolic : [0],
+            data: morningSysArr,
             borderColor: '#2F6FED',
             backgroundColor: 'rgba(47, 111, 237, 0.1)',
             tension: 0.3,

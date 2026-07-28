@@ -9,12 +9,17 @@
   <meta name="description" content="요양보호사가 어르신 케어 현황을 매일 작성하고 가족이 실시간으로 언제든 확인할 수 있는 일일 케어 현황 앱">
   <meta name="theme-color" content="#2F6FED">
 
+  <!-- Performance & Resource Hints -->
+  <link rel="preconnect" href="https://script.google.com" crossorigin>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
+
   <!-- Stylesheets -->
   <link rel="stylesheet" href="css/font.css">
   <link rel="stylesheet" href="css/style.css">
 
-  <!-- Chart.js CDN -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <!-- Chart.js CDN (Deferred for non-blocking page load) -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" defer></script>
 </head>
 <body>
 
@@ -476,11 +481,11 @@
 
   </div>
 
-  <!-- Scripts -->
-  <script src="js/config.js"></script>
-  <script src="js/store.js"></script>
-  <script src="js/gas-api.js"></script>
-  <script src="js/components.js"></script>
-  <script src="js/app.js"></script>
+  <!-- Deferred Application Scripts -->
+  <script src="js/config.js" defer></script>
+  <script src="js/store.js" defer></script>
+  <script src="js/gas-api.js" defer></script>
+  <script src="js/components.js" defer></script>
+  <script src="js/app.js" defer></script>
 </body>
 </html>
