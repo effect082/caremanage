@@ -4,10 +4,10 @@
 
 const CONFIG = {
   // Primary Active GAS Web App Endpoint (Newly Deployed)
-  GAS_URL: 'https://script.google.com/macros/s/AKfycbzWfvWvBtUKlCaYEEso77YHeBF_vq5Jm13yYO0vwVA9nO23k3L1L3ruU72s2BVzCShA/exec',
+  GAS_URL: 'https://script.google.com/macros/s/AKfycbKuYQHNgGZLmmKZuuKRnNWOkUtz-wouV64EWWIOOblhEaHmRSZ9-w9v2iUfv6NgbXG/exec',
   
   // Secondary GAS Endpoints (Failover)
-  GAS_URL_ALT: 'https://script.google.com/macros/s/AKfycbw9GfsWI9YocSm1q5gkTWto2Ef08cnIULYYqO_5D916307hCuFn12TOWUHh8jGivoBC/exec',
+  GAS_URL_ALT: 'https://script.google.com/macros/s/AKfycbzWfvWvBtUKlCaYEEso77YHeBF_vq5Jm13yYO0vwVA9nO23k3L1L3ruU72s2BVzCShA/exec',
   
   // Health Thresholds
   THRESHOLDS: {
